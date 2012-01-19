@@ -79,6 +79,7 @@ class Client(object):
         
         logger.debug('content: %s', r.content)
         r = json.loads(r.content)
+        
         if r['status'] == 'ERROR':
             raise Exception(r['error_type'])
         
