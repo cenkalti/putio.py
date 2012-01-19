@@ -16,14 +16,15 @@ import re
 import json
 import logging
 import requests
+import iso8601
 from urllib import urlencode
 from pdb import set_trace as st
 
 logger = logging.getLogger(__name__)
 
-API_URL = 'https://put.io/v2'
-ACCESS_TOKEN_URL = 'https://put.io/v2/oauth2/access_token'
-AUTHENTICATION_URL = 'https://put.io/v2/oauth2/authenticate'
+API_URL             = 'https://put.io/v2'
+ACCESS_TOKEN_URL    = 'https://put.io/v2/oauth2/access_token'
+AUTHENTICATION_URL  = 'https://put.io/v2/oauth2/authenticate'
 
 
 class AuthHelper(object):
@@ -89,27 +90,36 @@ class _BaseResource(object):
         '''Construct the object from a dict'''
         self.__dict__.update(resource_dict)
         
+        try:
+            self.created_at = iso8601.parse_date(self.created_at)
+        except:
+            pass
+        
     def __str__(self):
-        return self.name
+        return self.name.encode('utf-8')
 
     def __repr__(self):
         # shorten name for display
         name = self.name[:17] + '...' if len(self.name) > 20 else self.name
-        return 'File(%s, "%s")' % (self.id, name)
+        return 'File(%s, "%s")' % (self.id, str(self))
 
 
 class _File(_BaseResource):
     @classmethod
     def list(cls, parent_id=0):
-        d = cls.client.request('/files/list', params=dict(parent_id=parent_id))
+        d = cls.client.request('/files/list', params={'parent_id': parent_id})
         files = d['files']
         files = [cls(f) for f in files]
+        #return files
         ids = [f.id for f in files]
         return dict(zip(ids, files))
     
+    def dir(self):
+        '''Helper function for listing inside of directory'''
+        return self.list(parent_id=self.id)
+    
     def download(self, dest='.'):
         r = self.client.request('/files/%s' % self.id, raw=True)
-        print r
         filename = re.match('attachment; filename\="(.*)"', r.headers['Content-Disposition']).groups()[0]
         with open(os.path.join(dest, filename), 'wb') as f:
             for data in r.iter_content():
