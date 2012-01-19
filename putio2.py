@@ -11,10 +11,13 @@ Usage:
 
 """
 
+import os
+import re
 import json
 import logging
 import requests
 from urllib import urlencode
+from pdb import set_trace as st
 
 logger = logging.getLogger(__name__)
 
@@ -59,27 +62,31 @@ class Client(object):
         self.File = type('File', (_File,), attributes)
         #self.Transfer = type('Transfer', (_Transfer,), attributes)
     
-    def request(self, path, method='GET', params=None, data=None, as_dict=True):
+    def request(self, path, method='GET', params=None, data=None, raw=False):
         if not params:
             params = {}
         params['oauth_token'] = self.access_token
         
         url = API_URL + path
         logger.debug('url: %s', url)
+        
         r = requests.request(method, url, params=params, data=data, allow_redirects=True)
         logger.debug('response: %s', r)
-        if not as_dict:
-            return r.content
+        
+        if raw:
+            return r
         
         logger.debug('content: %s', r.content)
         r = json.loads(r.content)
         if r['status'] == 'ERROR':
             raise Exception(r['error_type'])
+        
         return r
 
 
 class _BaseResource(object):
     def __init__(self, resource_dict):
+        '''Construct the object from a dict'''
         self.__dict__.update(resource_dict)
         
     def __str__(self):
@@ -100,8 +107,13 @@ class _File(_BaseResource):
         ids = [f.id for f in files]
         return dict(zip(ids, files))
     
-    def download(self):
-        return self.client.request('/files/%s' % self.id, as_dict=False)
+    def download(self, dest='.'):
+        r = self.client.request('/files/%s' % self.id, raw=True)
+        print r
+        filename = re.match('attachment; filename\="(.*)"', r.headers['Content-Disposition']).groups()[0]
+        with open(os.path.join(dest, filename), 'wb') as f:
+            for data in r.iter_content():
+                f.write(data)
 
     def delete(self):
         return self.client.request('/files/%s/delete' % self.id)
