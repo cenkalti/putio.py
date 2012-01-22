@@ -119,11 +119,8 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)  
 
-    try:
-        cli = PutioCLI(args.token)
-        cli.cmdloop()
-    except KeyboardInterrupt:
-        PutioCLI.do_exit()
+    cli = PutioCLI(args.token)
+    cli.cmdloop()
 
 
 if __name__ == '__main__':
