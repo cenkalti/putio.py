@@ -28,6 +28,7 @@ AUTHENTICATION_URL  = 'https://put.io/v2/oauth2/authenticate'
 
 
 class AuthHelper(object):
+    
     def __init__(self, client_id, client_secret, redirect_uri):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -56,6 +57,7 @@ class AuthHelper(object):
 
 
 class Client(object):
+    
     def __init__(self, access_token):
         self.access_token = access_token
         
@@ -63,7 +65,7 @@ class Client(object):
         self.File = type('File', (_File,), attributes)
         #self.Transfer = type('Transfer', (_Transfer,), attributes)
     
-    def request(self, path, method='GET', params=None, data=None, raw=False):
+    def request(self, path, method='GET', params=None, data=None, files=None, headers=None, raw=False):
         if not params:
             params = {}
         params['oauth_token'] = self.access_token
@@ -71,7 +73,7 @@ class Client(object):
         url = API_URL + path
         logger.debug('url: %s', url)
         
-        r = requests.request(method, url, params=params, data=data, allow_redirects=True)
+        r = requests.request(method, url, params=params, data=data, files=files, headers=headers, allow_redirects=True)
         logger.debug('response: %s', r)
         
         if raw:
@@ -87,40 +89,69 @@ class Client(object):
 
 
 class _BaseResource(object):
+    
     def __init__(self, resource_dict):
         '''Construct the object from a dict'''
-        self.__dict__.update(resource_dict)
         
+        self.__dict__.update(resource_dict)
         try:
             self.created_at = iso8601.parse_date(self.created_at)
         except:
             pass
         
+
+class _File(_BaseResource):
+    
     def __str__(self):
         return self.name.encode('utf-8')
-
+        
     def __repr__(self):
         # shorten name for display
         name = self.name[:17] + '...' if len(self.name) > 20 else self.name
-        return 'File(%s, "%s")' % (self.id, str(self))
-
-
-class _File(_BaseResource):
+        return 'File(id=%s, name="%s")' % (self.id, str(self))
+        
     @classmethod
-    def list(cls, parent_id=0):
+    def list(cls, parent_id=0, as_dict=False):
         d = cls.client.request('/files/list', params={'parent_id': parent_id})
         files = d['files']
         files = [cls(f) for f in files]
-        #return files
-        ids = [f.id for f in files]
-        return dict(zip(ids, files))
+        if as_dict:
+            ids = [f.id for f in files]
+            return dict(zip(ids, files))
+        return files
+    
+    @classmethod
+    def upload(cls, path, name):
+        f = open(path)
+        files = {'file': (name, f)}
+        d = cls.client.request('/files/upload', method='POST', files=files)
+        f.close()
+        f = d['file']
+        return cls(f)
+    
+    # @property
+    #     def parent(self):
+    #         if self.parent_id:
+    #             d = self.client.request('/files/%s' % self.parent_id)
+    #             f = d['file']
+    #             parent = _File(f)
+    #             return parent
     
     def dir(self):
         '''Helper function for listing inside of directory'''
         return self.list(parent_id=self.id)
     
-    def download(self, dest='.'):
-        r = self.client.request('/files/%s' % self.id, raw=True)
+    def download(self, dest='.', range=None):
+        if range:
+            headers = {'Range': 'bytes=%s-%s' % range}
+        else:
+            headers = None
+            
+        r = self.client.request('/files/%s/download' % self.id, raw=True, headers=headers)
+        
+        if range:
+            return r.content
+            
         filename = re.match('attachment; filename\="(.*)"', r.headers['Content-Disposition']).groups()[0]
         with open(os.path.join(dest, filename), 'wb') as f:
             for data in r.iter_content():
