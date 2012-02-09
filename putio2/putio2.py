@@ -4,10 +4,7 @@ A python wrapper for put.io APIv2
 
 https://github.com/putdotio/putio-apiv2-python
 
-
-Usage:
-
-# TODO write usage
+Usage: See https://api.put.io/v2/docs
 
 """
 
@@ -22,9 +19,9 @@ from pdb import set_trace as st
 
 logger = logging.getLogger(__name__)
 
-API_URL             = 'https://put.io/v2'
-ACCESS_TOKEN_URL    = 'https://put.io/v2/oauth2/access_token'
-AUTHENTICATION_URL  = 'https://put.io/v2/oauth2/authenticate'
+API_URL             = 'https://api.put.io/v2'
+ACCESS_TOKEN_URL    = 'https://api.put.io/v2/oauth2/access_token'
+AUTHENTICATION_URL  = 'https://api.put.io/v2/oauth2/authenticate'
 
 
 class AuthHelper(object):
@@ -60,12 +57,24 @@ class Client(object):
     
     def __init__(self, access_token):
         self.access_token = access_token
-        
+
+        # Keep resource classes as attributes of client.
+        # Pass client to resource classes so resource object
+        # can use the client.
         attributes = {'client': self}
-        self.File = type('File', (_File,), attributes)
-        #self.Transfer = type('Transfer', (_Transfer,), attributes)
+        self.File     = type('File',     (_File,),     attributes)
+        self.Transfer = type('Transfer', (_Transfer,), attributes)
     
     def request(self, path, method='GET', params=None, data=None, files=None, headers=None, raw=False):
+        '''
+        Wrapper around requests.request()
+
+        Prepends API_URL to path.
+        Inserts oauth_token to query params.
+        Parses response as JSON and returns it.
+
+        '''
+
         if not params:
             params = {}
         params['oauth_token'] = self.access_token
@@ -98,17 +107,20 @@ class _BaseResource(object):
             self.created_at = iso8601.parse_date(self.created_at)
         except:
             pass
-        
-
-class _File(_BaseResource):
     
     def __str__(self):
         return self.name.encode('utf-8')
         
     def __repr__(self):
-        # shorten name for display
-        name = self.name[:17] + '...' if len(self.name) > 20 else self.name
-        return 'File(id=%s, name="%s")' % (self.id, str(self))
+        try:
+            # shorten name for display
+            name = self.name[:17] + '...' if len(self.name) > 20 else self.name
+            return '%s(id=%s, name="%s")' % (self.class.__name__, self.id, str(self))
+        except:
+            return object.__repr__()
+        
+
+class _File(_BaseResource):
         
     @classmethod
     def list(cls, parent_id=0, as_dict=False):
@@ -128,14 +140,6 @@ class _File(_BaseResource):
         f.close()
         f = d['file']
         return cls(f)
-    
-    # @property
-    #     def parent(self):
-    #         if self.parent_id:
-    #             d = self.client.request('/files/%s' % self.parent_id)
-    #             f = d['file']
-    #             parent = _File(f)
-    #             return parent
     
     def dir(self):
         '''Helper function for listing inside of directory'''
@@ -159,3 +163,23 @@ class _File(_BaseResource):
 
     def delete(self):
         return self.client.request('/files/%s/delete' % self.id)
+
+
+class _Transfer(_BaseResource):
+        
+    @classmethod
+    def list(cls, parent_id=0, as_dict=False):
+        d = cls.client.request('/transfers/list')
+        transfers = d['transfers']
+        transfers = [cls(t) for t in transfers]
+        if as_dict:
+            ids = [t.id for t in transfers]
+            return dict(zip(ids, transfers))
+        return transfers
+    
+    @classmethod
+    def add(cls, url, parent_id=0, extract=False):
+        d = cls.client.request('/transfers/add', method='POST', data=dict(
+            url=url, parent_id=parent_id, extract=extract))
+        t = d['transfer']
+        return cls(t)
