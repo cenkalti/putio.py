@@ -89,7 +89,10 @@ class Client(object):
             return r
         
         logger.debug('content: %s', r.content)
-        r = json.loads(r.content)
+        try:
+            r = json.loads(r.content)
+        except ValueError:            
+            raise Exception('Server didn\'t send valid JSON:\n%s\n%s' % (r, r.content))
         
         if r['status'] == 'ERROR':
             raise Exception(r['error_type'])
@@ -115,7 +118,7 @@ class _BaseResource(object):
         try:
             # shorten name for display
             name = self.name[:17] + '...' if len(self.name) > 20 else self.name
-            return '%s(id=%s, name="%s")' % (self.class.__name__, self.id, str(self))
+            return '%s(id=%s, name="%s")' % (self.__class__.__name__, self.id, str(self))
         except:
             return object.__repr__()
         
