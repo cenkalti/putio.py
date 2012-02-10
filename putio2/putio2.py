@@ -4,7 +4,19 @@ A python wrapper for put.io APIv2
 
 https://github.com/putdotio/putio-apiv2-python
 
-Usage: See https://api.put.io/v2/docs
+Documentation: See https://api.put.io/v2/docs
+
+Usage:
+
+    import putio2
+    client = putio2.Client('..oauth token here...')
+    
+    # list files
+    files = client.File.list()
+    ...
+    
+    # add a new transfer
+    client.Transfer.add('http://example.com/good.torrent')
 
 """
 
