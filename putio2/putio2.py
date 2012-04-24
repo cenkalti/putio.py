@@ -24,10 +24,10 @@ import os
 import re
 import json
 import logging
+from urllib import urlencode
+
 import requests
 import iso8601
-from urllib import urlencode
-from pdb import set_trace as st
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,8 @@ class _File(_BaseResource):
         f = d['file']
         return cls(f)
     
-    def dir(self):
+    @property
+    def files(self):
         '''Helper function for listing inside of directory'''
         return self.list(parent_id=self.id)
     
