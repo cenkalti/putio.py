@@ -179,6 +179,12 @@ class _File(_BaseResource):
 
     def delete(self):
         return self.client.request('/files/%s/delete' % self.id)
+    
+    @classmethod
+    def get(cls, id):
+        d = cls.client.request('/files/%i' % id, method='GET')
+        t = d['file']
+        return cls(t)
 
 
 class _Transfer(_BaseResource):
@@ -198,5 +204,11 @@ class _Transfer(_BaseResource):
         d = cls.client.request('/transfers/add', method='POST', data=dict(
             url=url, parent_id=parent_id, extract=extract,
             callback_url=callback_url))
+        t = d['transfer']
+        return cls(t)
+    
+    @classmethod
+    def get(cls, id):
+        d = cls.client.request('/transfers/%i' % id, method='GET')
         t = d['transfer']
         return cls(t)
