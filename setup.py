@@ -1,16 +1,15 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
 setup(
-    name='Putio-API-v2',
+    name='putio.py',
     version='1.0',
-    long_description=__doc__,
-    packages=['putio2'],
+    author=u'Cenk Altı',
+    url='http://github.com/cenkalti/putio.py',
+    # packages=['putio2'],
+    py_modules=['putio'],
     include_package_data=True,
     zip_safe=False,
+    platforms='any',
     install_requires=['requests', 'iso8601'],
-    entry_points = {
-        'console_scripts': [
-            'putio-cli = cli:main',
-            ],
-        }
 )
