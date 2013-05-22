@@ -1,30 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-A python wrapper for put.io APIv2
-
-https://github.com/putdotio/putio-apiv2-python
-
-Documentation: See https://api.put.io/v2/docs
-
-Usage:
-
-    >>> import putio
-    >>> helper = putio.AuthHelper(CLIENT_ID, CLIENT_SECRET, \
-                                  CALLBACK_URL, type='token')
-    >>>
-    >>> # this will open a browser to authetication url
-    >>> # after authenticating you will find the oauth_token in the address bar
-    >>> helper.open_authentication_url()
-    >>>
-    >>> client = putio.Client(OAUTH_TOKEN)
-    >>>
-    >>> # list files
-    >>> files = client.File.list()
-    >>>
-    >>> # add a new transfer
-    >>> client.Transfer.add('http://example.com/good.torrent')
-
-"""
 import os
 import re
 import json
