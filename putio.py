@@ -149,10 +149,10 @@ class _File(_BaseResource):
 
     @classmethod
     def upload(cls, path, name):
-        f = open(path)
-        files = {'file': (name, f)}
-        d = cls.client.request('/files/upload', method='POST', files=files)
-        f.close()
+        with open(path) as f:
+            files = {'file': (name, f)}
+            d = cls.client.request('/files/upload', method='POST', files=files)
+
         f = d['file']
         return cls(f)
 
@@ -160,21 +160,14 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
     
-    def download(self, dest='.', range=None):
-        if range:
-            headers = {'Range': 'bytes=%s-%s' % range}
-        else:
-            headers = None
-            
+    def download(self, dest='.'):
         response = self.client.request(
-            '/files/%s/download' % self.id, raw=True, headers=headers)
-        
-        if range:
-            return response.content
-            
+            '/files/%s/download' % self.id, raw=True)
+
         filename = re.match(
             'attachment; filename="(.*)"',
             response.headers['Content-Disposition']).groups()[0]
+
         with open(os.path.join(dest, filename), 'wb') as f:
             for data in response.iter_content():
                 f.write(data)
