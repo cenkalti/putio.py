@@ -148,9 +148,12 @@ class _File(_BaseResource):
         return [cls(f) for f in files]
 
     @classmethod
-    def upload(cls, path, name):
+    def upload(cls, path, name=None):
         with open(path) as f:
-            files = {'file': (name, f)}
+            if name:
+                files = {'file': (name, f)}
+            else:
+                files = {'file': f}
             d = cls.client.request('/files/upload', method='POST', files=files)
 
         f = d['file']
