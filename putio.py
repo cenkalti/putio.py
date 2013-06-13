@@ -201,3 +201,14 @@ class _Transfer(_BaseResource):
             callback_url=callback_url))
         t = d['transfer']
         return cls(t)
+
+    @classmethod
+    def add_torrent(cls, path, parent_id=0, extract=False, callback_url=None):
+        with open(path) as f:
+            files = {'file': f}
+            d = cls.client.request('/files/upload', method='POST', files=files,
+                                   data=dict(parent_id=parent_id,
+                                             extract=extract,
+                                             callback_url=callback_url))
+        t = d['transfer']
+        return cls(t)
