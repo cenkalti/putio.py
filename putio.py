@@ -195,7 +195,7 @@ class _Transfer(_BaseResource):
         return cls(t)
 
     @classmethod
-    def add(cls, url, parent_id=0, extract=False, callback_url=None):
+    def add_url(cls, url, parent_id=0, extract=False, callback_url=None):
         d = cls.client.request('/transfers/add', method='POST', data=dict(
             url=url, parent_id=parent_id, extract=extract,
             callback_url=callback_url))
