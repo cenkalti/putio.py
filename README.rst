@@ -34,6 +34,6 @@ Usage
     files = client.File.list()
 
     # add a new transfer
-    client.Transfer.add('http://example.com/good.torrent')
+    client.Transfer.add_url('http://example.com/good.torrent')
 
     # read the code for other methods.
