@@ -120,8 +120,8 @@ class _BaseResource(object):
         self.__dict__.update(resource_dict)
         try:
             self.created_at = iso8601.parse_date(self.created_at)
-        except iso8601.ParseError:
-            pass
+        except (AttributeError, iso8601.ParseError):
+            self.created_at = None
     
     def __str__(self):
         return self.name.encode('utf-8')
