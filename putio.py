@@ -170,7 +170,11 @@ class _File(_BaseResource):
             self._download_file(dest, delete_after_download)
 
     def _download_directory(self, dest='.', delete_after_download=False):
-        dest = os.path.join(dest, self.name)
+        name = self.name
+        if isinstance(name, unicode):
+            name = name.encode('utf-8', 'replace')
+            
+        dest = os.path.join(dest, name)
         if not os.path.exists(dest):
             os.mkdir(dest)
 
