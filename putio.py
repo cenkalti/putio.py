@@ -173,12 +173,12 @@ class _File(_BaseResource):
             for sub_file in self.dir():
                 sub_file.download(local_dir, delete_on_download)
         else:
-            self.__download_file(dest)
+            self._download_file(dest)
         
         if (delete_on_download is True):    
             self.delete()
         
-    def __download_file(self, dest='.'):
+    def _download_file(self, dest='.'):
         response = self.client.request(
             '/files/%s/download' % self.id, raw=True, stream=True)
         
