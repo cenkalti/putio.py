@@ -163,7 +163,7 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
     
-    def download(self, dest='.', delete_on_download=False):
+    def download(self, dest='.', delete_after_download=False):
         if self.content_type == 'application/x-directory':
             local_dir = os.path.join(dest, self.name)
             
@@ -171,11 +171,11 @@ class _File(_BaseResource):
                 os.mkdir(local_dir)
             
             for sub_file in self.dir():
-                sub_file.download(local_dir, delete_on_download)
+                sub_file.download(local_dir, delete_after_download)
         else:
             self._download_file(dest)
         
-        if (delete_on_download is True):    
+        if (delete_after_download is True):
             self.delete()
         
     def _download_file(self, dest='.'):
