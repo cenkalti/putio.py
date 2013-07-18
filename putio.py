@@ -65,7 +65,7 @@ class Client(object):
         self.Transfer = type('Transfer', (_Transfer,), attributes)
 
     def request(self, path, method='GET', params=None, data=None, files=None,
-                headers=None, raw=False):
+                headers=None, raw=False, stream=False):
         """
         Wrapper around requests.request()
 
@@ -90,7 +90,7 @@ class Client(object):
         
         response = self.session.request(
             method, url, params=params, data=data, files=files,
-            headers=headers, allow_redirects=True)
+            headers=headers, allow_redirects=True, stream=stream)
         logger.debug('response: %s', response)
         if raw:
             return response
@@ -163,19 +163,34 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
     
-    def download(self, dest='.'):
+    def download(self, dest='.', delete_on_download=False):
+        if self.content_type == 'application/x-directory':
+            local_dir = os.path.join(dest, self.name)
+            
+            if not os.path.exists(local_dir):
+                os.mkdir(local_dir)
+            
+            for sub_file in self.dir():
+                sub_file.download(local_dir, delete_on_download)
+        else:
+            self.__download_file(dest)
+        
+        if (delete_on_download is True):    
+            self.delete()
+        
+    def __download_file(self, dest='.'):
         response = self.client.request(
-            '/files/%s/download' % self.id, raw=True)
-
+            '/files/%s/download' % self.id, raw=True, stream=True)
+        
         filename = re.match(
-            'attachment; filename=(.*)$',
-            response.headers['Content-Disposition']).groups()[0]
-        # If file name has spaces, it must have quotes around.
-        filename = filename.strip('"')
+            'attachment; filename=(.*)',
+            response.headers['content-disposition']).groups()[0]
 
         with open(os.path.join(dest, filename), 'wb') as f:
-            for data in response.iter_content():
-                f.write(data)
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
@@ -214,3 +229,7 @@ class _Transfer(_BaseResource):
                                              callback_url=callback_url))
         t = d['transfer']
         return cls(t)
+        
+    @classmethod
+    def clean(cls):
+        return cls.client.request('/transfers/clean', method='POST')
