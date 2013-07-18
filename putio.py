@@ -175,7 +175,7 @@ class _File(_BaseResource):
         else:
             self._download_file(dest)
         
-        if (delete_after_download is True):
+        if delete_after_download:
             self.delete()
         
     def _download_file(self, dest='.'):
