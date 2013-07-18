@@ -165,20 +165,22 @@ class _File(_BaseResource):
     
     def download(self, dest='.', delete_after_download=False):
         if self.content_type == 'application/x-directory':
-            local_dir = os.path.join(dest, self.name)
-            
-            if not os.path.exists(local_dir):
-                os.mkdir(local_dir)
-            
-            for sub_file in self.dir():
-                sub_file.download(local_dir, delete_after_download)
+            self._download_directory(dest, delete_after_download)
         else:
-            self._download_file(dest)
-        
+            self._download_file(dest, delete_after_download)
+
+    def _download_directory(self, dest='.', delete_after_download=False):
+        dest = os.path.join(dest, self.name)
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+
+        for sub_file in self.dir():
+            sub_file.download(dest, delete_after_download)
+
         if delete_after_download:
             self.delete()
         
-    def _download_file(self, dest='.'):
+    def _download_file(self, dest='.', delete_after_download=False):
         response = self.client.request(
             '/files/%s/download' % self.id, raw=True, stream=True)
         
@@ -191,6 +193,9 @@ class _File(_BaseResource):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
+
+        if delete_after_download:
+            self.delete()
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
