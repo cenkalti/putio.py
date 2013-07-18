@@ -188,7 +188,7 @@ class _File(_BaseResource):
 
         with open(os.path.join(dest, filename), 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
-                if chunk: # filter out keep-alive new chunks
+                if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
 
