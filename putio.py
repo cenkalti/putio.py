@@ -187,6 +187,8 @@ class _File(_BaseResource):
         filename = re.match(
             'attachment; filename=(.*)',
             response.headers['content-disposition']).groups()[0]
+        # If file name has spaces, it must have quotes around.
+        filename = filename.strip('"')
 
         with open(os.path.join(dest, filename), 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
