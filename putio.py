@@ -36,7 +36,7 @@ class AuthHelper(object):
 
     def open_authentication_url(self):
         webbrowser.open(self.authentication_url)
-    
+
     def get_access_token(self, code):
         params = {
             'client_id': self.client_id,
@@ -52,7 +52,7 @@ class AuthHelper(object):
 
 
 class Client(object):
-    
+
     def __init__(self, access_token):
         self.access_token = access_token
         self.session = requests.session()
@@ -63,6 +63,7 @@ class Client(object):
         attributes = {'client': self}
         self.File = type('File', (_File,), attributes)
         self.Transfer = type('Transfer', (_Transfer,), attributes)
+        self.Account = type('Account', (_Account,), attributes)
 
     def request(self, path, method='GET', params=None, data=None, files=None,
                 headers=None, raw=False, stream=False):
@@ -87,31 +88,31 @@ class Client(object):
 
         url = BASE_URL + path
         logger.debug('url: %s', url)
-        
+
         response = self.session.request(
             method, url, params=params, data=data, files=files,
             headers=headers, allow_redirects=True, stream=stream)
         logger.debug('response: %s', response)
         if raw:
             return response
-        
+
         logger.debug('content: %s', response.content)
         try:
             response = json.loads(response.content)
-        except ValueError:            
+        except ValueError:
             raise Exception('Server didn\'t send valid JSON:\n%s\n%s' % (
                 response, response.content))
 
         if response['status'] == 'ERROR':
             raise Exception(response['error_type'])
-        
+
         return response
 
 
 class _BaseResource(object):
 
     client = None
-    
+
     def __init__(self, resource_dict):
         """Constructs the object from a dict."""
         # All resources must have id and name attributes
@@ -122,7 +123,7 @@ class _BaseResource(object):
             self.created_at = iso8601.parse_date(self.created_at)
         except (AttributeError, iso8601.ParseError):
             self.created_at = None
-    
+
     def __str__(self):
         return self.name.encode('utf-8')
 
@@ -162,7 +163,7 @@ class _File(_BaseResource):
     def dir(self):
         """List the files under directory."""
         return self.list(parent_id=self.id)
-    
+
     def download(self, dest='.', delete_after_download=False):
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download)
@@ -173,7 +174,7 @@ class _File(_BaseResource):
         name = self.name
         if isinstance(name, unicode):
             name = name.encode('utf-8', 'replace')
-            
+
         dest = os.path.join(dest, name)
         if not os.path.exists(dest):
             os.mkdir(dest)
@@ -183,11 +184,11 @@ class _File(_BaseResource):
 
         if delete_after_download:
             self.delete()
-        
+
     def _download_file(self, dest='.', delete_after_download=False):
         response = self.client.request(
             '/files/%s/download' % self.id, raw=True, stream=True)
-        
+
         filename = re.match(
             'attachment; filename=(.*)',
             response.headers['content-disposition']).groups()[0]
@@ -209,7 +210,7 @@ class _File(_BaseResource):
 
 
 class _Transfer(_BaseResource):
-        
+
     @classmethod
     def list(cls):
         d = cls.client.request('/transfers/list')
@@ -240,7 +241,17 @@ class _Transfer(_BaseResource):
                                              callback_url=callback_url))
         t = d['transfer']
         return cls(t)
-        
+
     @classmethod
     def clean(cls):
         return cls.client.request('/transfers/clean', method='POST')
+
+class _Account(_BaseResource):
+
+    @classmethod
+    def info(cls):
+      return cls.client.request('/account/info', method='GET')
+
+    @classmethod
+    def settings(cls):
+      return cls.client.request('/account/settings', method='GET')
