@@ -212,6 +212,10 @@ class _File(_BaseResource):
         return self.client.request('/files/move', method='POST',
                                    data={'file_id': str(self.id), 'parent_id': str(parent_id)})
 
+    def rename(self, name):
+        return self.client.request('/files/rename', method='POST',
+                                   data={'file_id': str(self.id), 'name': str(name)})
+
 
 class _Transfer(_BaseResource):
 
