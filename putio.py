@@ -208,6 +208,10 @@ class _File(_BaseResource):
         return self.client.request('/files/delete', method='POST',
                                    data={'file_ids': str(self.id)})
 
+    def move(self, parent_id):
+        return self.client.request('/files/move', method='POST',
+                                   data={'file_id': str(self.id), 'parent_id': str(parent_id)})
+
 
 class _Transfer(_BaseResource):
 
@@ -246,12 +250,13 @@ class _Transfer(_BaseResource):
     def clean(cls):
         return cls.client.request('/transfers/clean', method='POST')
 
+
 class _Account(_BaseResource):
 
     @classmethod
     def info(cls):
-      return cls.client.request('/account/info', method='GET')
+        return cls.client.request('/account/info', method='GET')
 
     @classmethod
     def settings(cls):
-      return cls.client.request('/account/settings', method='GET')
+        return cls.client.request('/account/settings', method='GET')
