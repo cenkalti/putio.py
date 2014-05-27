@@ -210,7 +210,7 @@ class _File(_BaseResource):
 
     def move(self, parent_id):
         return self.client.request('/files/move', method='POST',
-                                   data={'file_id': str(self.id), 'parent_id': str(parent_id)})
+                                   data={'file_ids': str(self.id), 'parent_id': str(parent_id)})
 
     def rename(self, name):
         return self.client.request('/files/rename', method='POST',
