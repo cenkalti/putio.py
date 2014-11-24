@@ -9,7 +9,7 @@ setup(
     url='http://github.com/cenkalti/putio.py',
     py_modules=['putio'],
     include_package_data=True,
-    zip_safe=False,
+    zip_safe=True,
     platforms='any',
     install_requires=['requests', 'iso8601'],
 )
