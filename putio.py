@@ -149,13 +149,14 @@ class _File(_BaseResource):
         return [cls(f) for f in files]
 
     @classmethod
-    def upload(cls, path, name=None):
+    def upload(cls, path, name=None, parent_id=0):
         with open(path) as f:
             if name:
                 files = {'file': (name, f)}
             else:
                 files = {'file': f}
-            d = cls.client.request('/files/upload', method='POST', files=files)
+            d = cls.client.request('/files/upload', method='POST',
+                                   data={'parent_id': parent_id}, files=files)
 
         f = d['file']
         return cls(f)
