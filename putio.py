@@ -242,7 +242,7 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def add_torrent(cls, path, parent_id=0, extract=False, callback_url=None):
-        with open(path) as f:
+        with open(path, 'rb') as f:
             files = {'file': f}
             d = cls.client.request('/files/upload', method='POST', files=files,
                                    data=dict(save_parent_id=parent_id,
