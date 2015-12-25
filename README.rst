@@ -10,9 +10,9 @@ Installing
 putio.py is available on PyPI.
 
 .. code-block:: bash
-
     $ pip install putio.py
-
+    $ pip install iso8601
+    $ pip install requests
 
 Usage
 -----

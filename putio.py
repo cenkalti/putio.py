@@ -4,7 +4,7 @@ import re
 import json
 import logging
 import webbrowser
-from urllib import urlencode
+from urllib.parse import urlencode
 
 import requests
 import iso8601
