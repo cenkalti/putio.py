@@ -196,8 +196,7 @@ class _File(_BaseResource):
             self.delete()
 
     def _download_file(self, dest='.', delete_after_download=False, range_size=RANGE_SIZE, chunk_size=CHUNK_SIZE):
-        filename = self.name.strip('"')
-        filepath = os.path.join(dest, filename)
+        filepath = os.path.join(dest, self.name)
 
         if os.path.exists(filepath):
             first_byte = os.path.getsize(filepath)
