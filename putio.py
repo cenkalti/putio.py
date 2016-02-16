@@ -221,7 +221,8 @@ class _File(_BaseResource):
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:  # filter out keep-alive new chunks
                         f.write(chunk)
-                        f.flush()
+
+                f.flush()
 
                 first_byte = last_byte + 1
     
