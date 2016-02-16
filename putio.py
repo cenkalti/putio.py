@@ -209,7 +209,7 @@ class _File(_BaseResource):
             # Split up file into blocks of RANGE_SIZE each
             while first_byte < self.size:
                 if first_byte + range_size < self.size:
-                    last_byte = first_byte + range_size
+                    last_byte = min(first_byte + range_size, self.size)
                 else:
                     last_byte = self.size
 
