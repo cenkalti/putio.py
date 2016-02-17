@@ -208,10 +208,7 @@ class _File(_BaseResource):
         with open(filepath, 'ab') as f:
             # Split up file into blocks of RANGE_SIZE each
             while first_byte < self.size:
-                if first_byte + range_size < self.size:
-                    last_byte = min(first_byte + range_size, self.size)
-                else:
-                    last_byte = self.size
+                last_byte = min(first_byte + range_size, self.size) - 1
 
                 logging.debug('download range %d - %d' % (first_byte, last_byte))
 
