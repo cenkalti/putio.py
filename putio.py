@@ -254,7 +254,6 @@ class _File(_BaseResource):
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:  # filter out keep-alive new chunks
                         f.write(chunk)
-                        f.flush()
     
         if self._verify_file(filepath, chunk_size):
             if delete_after_download:
