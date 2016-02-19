@@ -11,5 +11,5 @@ setup(
     include_package_data=True,
     zip_safe=True,
     platforms='any',
-    install_requires=['requests', 'iso8601'],
+    install_requires=['requests', 'iso8601', 'urllib3'],
 )

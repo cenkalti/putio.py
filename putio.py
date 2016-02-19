@@ -4,9 +4,13 @@ import re
 import json
 import logging
 import webbrowser
+
 from urllib import urlencode
+from urllib3.util.retry import Retry
 
 import requests
+from requests.adapters import HTTPAdapter
+
 import iso8601
 import binascii
 
@@ -22,6 +26,15 @@ ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
 AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 
 logger = logging.getLogger(__name__)
+
+# Use a more complex retry strategy
+s = requests.Session()
+
+# Retry maximum 10 times, backoff on each retry, sleeping 1s, 2s, 4s, 8s, to a maximum of 120s
+retries = Retry(total=10, backoff_factor=1)
+
+# Use the retry strategy for all HTTPS requests
+s.mount('https://', HTTPAdapter(max_retries=retries))
 
 
 class AuthHelper(object):
