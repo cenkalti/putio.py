@@ -27,15 +27,6 @@ AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 
 logger = logging.getLogger(__name__)
 
-# Use a more complex retry strategy
-s = requests.Session()
-
-# Retry maximum 10 times, backoff on each retry, sleeping 1s, 2s, 4s, 8s, to a maximum of 120s
-retries = Retry(total=10, backoff_factor=1)
-
-# Use the retry strategy for all HTTPS requests
-s.mount('https://', HTTPAdapter(max_retries=retries))
-
 
 class AuthHelper(object):
 
@@ -77,6 +68,12 @@ class Client(object):
     def __init__(self, access_token):
         self.access_token = access_token
         self.session = requests.session()
+
+        # Retry maximum 10 times, backoff on each retry, sleeping 1s, 2s, 4s, 8s, to a maximum of 120s
+        retries = Retry(total=10, backoff_factor=1)
+
+        # Use the retry strategy for all HTTPS requests
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
         # Keep resource classes as attributes of client.
         # Pass client to resource classes so resource object
