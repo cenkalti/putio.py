@@ -9,6 +9,13 @@ from urllib import urlencode
 import requests
 import iso8601
 
+KB = 1024
+MB = 1024 * KB
+
+# Read and write operations are limited to this chunk size.
+# This can make a big difference when dealing with large files.
+CHUNK_SIZE = 256 * KB
+
 BASE_URL = 'https://api.put.io/v2'
 ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
 AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
@@ -165,11 +172,11 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
 
-    def download(self, dest='.', delete_after_download=False):
+    def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download)
         else:
-            self._download_file(dest, delete_after_download)
+            self._download_file(dest, delete_after_download, chunk_size)
 
     def _download_directory(self, dest='.', delete_after_download=False):
         name = self.name
@@ -186,21 +193,32 @@ class _File(_BaseResource):
         if delete_after_download:
             self.delete()
 
-    def _download_file(self, dest='.', delete_after_download=False):
-        response = self.client.request(
-            '/files/%s/download' % self.id, raw=True, stream=True)
+    def _download_file(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
+        filepath = os.path.join(dest, self.name)
 
-        filename = re.match(
-            'attachment; filename=(.*)',
-            response.headers['content-disposition']).groups()[0]
-        # If file name has spaces, it must have quotes around.
-        filename = filename.strip('"')
+        if os.path.exists(filepath):
+            first_byte = os.path.getsize(filepath)
 
-        with open(os.path.join(dest, filename), 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-                    f.flush()
+            if first_byte == self.size:
+                logger.warning('file %s exists and is the correct size %d' % (filepath, self.size))
+        else:
+            first_byte = 0
+
+        logger.debug('file %s is currently %d, should be %d' % (filepath, first_byte, self.size))
+
+        if first_byte < self.size:
+            with open(filepath, 'ab') as f:
+                headers = { 'Range': 'bytes=%d-' % first_byte }
+
+                logger.debug('request range: bytes=%d-' % first_byte)
+                response = self.client.request('/files/%s/download' % self.id,
+                                               headers=headers,
+                                               raw=True,
+                                               stream=True)
+
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
 
         if delete_after_download:
             self.delete()
