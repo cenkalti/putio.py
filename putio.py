@@ -8,6 +8,7 @@ from urllib import urlencode
 
 import requests
 import iso8601
+import binascii
 
 BASE_URL = 'https://api.put.io/v2'
 ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
@@ -186,24 +187,48 @@ class _File(_BaseResource):
         if delete_after_download:
             self.delete()
 
+    def _verify_file(self, filepath):
+        filesize = os.path.getsize(filepath)
+
+        if self.size != filesize:
+            logging.error('file %s is %d bytes, should be %s bytes' % (filepath, filesize, self.size))
+            return False
+
+        crcbin = 0
+
+        # Files could be very large, so don't try to open them in one go
+        with open(filepath, 'rb') as f:
+            while True:
+                chunk = f.read(256 * 1024) # Chunk size is 256kb
+
+                if not chunk:
+                    break
+
+                crcbin = binascii.crc32(chunk, crcbin) & 0xffffffff
+
+        crc32 = '%08x' % crcbin
+
+        if crc32 != self.crc32:
+            logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, self.crc32))
+            return False
+
+        return True
+
     def _download_file(self, dest='.', delete_after_download=False):
         response = self.client.request(
             '/files/%s/download' % self.id, raw=True, stream=True)
 
-        filename = re.match(
-            'attachment; filename=(.*)',
-            response.headers['content-disposition']).groups()[0]
-        # If file name has spaces, it must have quotes around.
-        filename = filename.strip('"')
+        filepath = os.path.join(dest, self.name)
 
-        with open(os.path.join(dest, filename), 'wb') as f:
+        with open(filepath, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
 
-        if delete_after_download:
-            self.delete()
+        if self._verify_file(filepath):
+            if delete_after_download:
+                self.delete()
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
