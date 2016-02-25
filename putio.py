@@ -217,8 +217,7 @@ class _File(_BaseResource):
         crcbin = 0
         with open(filepath, 'rb') as f:
             while True:
-                chunk = f.read(256 * 1024) # Chunk size is 256kb
-
+                chunk = f.read(CHUNK_SIZE)
                 if not chunk:
                     break
 
