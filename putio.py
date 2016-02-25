@@ -208,6 +208,7 @@ class _File(_BaseResource):
             self.delete()
 
     def _verify_file(self, filepath):
+        logger.info('verifying crc32...')
         filesize = os.path.getsize(filepath)
         if self.size != filesize:
             logging.error('file %s is %d bytes, should be %s bytes' % (filepath, filesize, self.size))
