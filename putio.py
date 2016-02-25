@@ -69,8 +69,12 @@ class Client(object):
         self.access_token = access_token
         self.session = requests.session()
 
-        # Retry maximum 10 times, backoff on each retry, sleeping 1s, 2s, 4s, 8s, to a maximum of 120s
-        retries = Retry(total=10, backoff_factor=1)
+        # Retry maximum 10 times, backoff on each retry
+        # Sleeps 1s, 2s, 4s, 8s, etc to a maximum of 120s between retries
+        # Retries on HTTP status codes 500, 502, 503, 504
+        retries = Retry(total=10,
+                        backoff_factor=1,
+                        status_forcelist=[ 500, 502, 503, 504 ])
 
         # Use the retry strategy for all HTTPS requests
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
