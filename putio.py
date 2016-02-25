@@ -73,7 +73,7 @@ class Client(object):
             # Retries on HTTP status codes 500, 502, 503, 504
             retries = Retry(total=10,
                             backoff_factor=1,
-                            status_forcelist=[ 500, 502, 503, 504 ])
+                            status_forcelist=[500, 502, 503, 504])
 
             # Use the retry strategy for all HTTPS requests
             self.session.mount('https://', HTTPAdapter(max_retries=retries))
@@ -209,14 +209,11 @@ class _File(_BaseResource):
 
     def _verify_file(self, filepath):
         filesize = os.path.getsize(filepath)
-
         if self.size != filesize:
             logging.error('file %s is %d bytes, should be %s bytes' % (filepath, filesize, self.size))
             return False
 
         crcbin = 0
-
-        # Files could be very large, so don't try to open them in one go
         with open(filepath, 'rb') as f:
             while True:
                 chunk = f.read(256 * 1024) # Chunk size is 256kb
@@ -249,7 +246,7 @@ class _File(_BaseResource):
 
         if first_byte < self.size:
             with open(filepath, 'ab') as f:
-                headers = { 'Range': 'bytes=%d-' % first_byte }
+                headers = {'Range': 'bytes=%d-' % first_byte}
 
                 logger.debug('request range: bytes=%d-' % first_byte)
                 response = self.client.request('/files/%s/download' % self.id,
