@@ -312,12 +312,10 @@ class _Transfer(_BaseResource):
     def clean(cls):
         return cls.client.request('/transfers/clean', method='POST')
 
-    @classmethod
-    def cancel(cls, transfer_ids):
-        transfer_ids = ','.join([ str(transfer_id) for transfer_id in transfer_ids ])
-        return cls.client.request('/transfers/cancel',
-                                  method='POST',
-                                  data={'transfer_ids': transfer_ids})
+    def cancel(self):
+        return self.client.request('/transfers/cancel',
+                                   method='POST',
+                                   data={'transfer_ids': self.id})
 
 
 class _Account(_BaseResource):
