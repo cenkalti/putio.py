@@ -232,8 +232,11 @@ class _File(_BaseResource):
         return True
 
     def _download_file(self, dest, delete_after_download, chunk_size):
-        filepath = os.path.join(dest, self.name)
+        name = self.name
+        if isinstance(name, unicode):
+            name = name.encode('utf-8', 'replace')
 
+        filepath = os.path.join(dest, name.encode('utf8'))
         if os.path.exists(filepath):
             first_byte = os.path.getsize(filepath)
 
