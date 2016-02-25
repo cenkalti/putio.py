@@ -188,11 +188,11 @@ class _File(_BaseResource):
 
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
-            self._download_directory(dest, delete_after_download)
+            self._download_directory(dest, delete_after_download, chunk_size)
         else:
             self._download_file(dest, delete_after_download, chunk_size)
 
-    def _download_directory(self, dest='.', delete_after_download=False):
+    def _download_directory(self, dest, delete_after_download, chunk_size):
         name = self.name
         if isinstance(name, unicode):
             name = name.encode('utf-8', 'replace')
@@ -202,7 +202,7 @@ class _File(_BaseResource):
             os.mkdir(dest)
 
         for sub_file in self.dir():
-            sub_file.download(dest, delete_after_download)
+            sub_file.download(dest, delete_after_download, chunk_size)
 
         if delete_after_download:
             self.delete()
@@ -231,7 +231,7 @@ class _File(_BaseResource):
 
         return True
 
-    def _download_file(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
+    def _download_file(self, dest, delete_after_download, chunk_size):
         filepath = os.path.join(dest, self.name)
 
         if os.path.exists(filepath):
