@@ -7,6 +7,9 @@ import webbrowser
 from urllib import urlencode
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 import iso8601
 
 BASE_URL = 'https://api.put.io/v2'
@@ -53,9 +56,20 @@ class AuthHelper(object):
 
 class Client(object):
 
-    def __init__(self, access_token):
+    def __init__(self, access_token, use_retry=False):
         self.access_token = access_token
         self.session = requests.session()
+
+        if use_retry:
+            # Retry maximum 10 times, backoff on each retry
+            # Sleeps 1s, 2s, 4s, 8s, etc to a maximum of 120s between retries
+            # Retries on HTTP status codes 500, 502, 503, 504
+            retries = Retry(total=10,
+                            backoff_factor=1,
+                            status_forcelist=[ 500, 502, 503, 504 ])
+
+            # Use the retry strategy for all HTTPS requests
+            self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
         # Keep resource classes as attributes of client.
         # Pass client to resource classes so resource object
