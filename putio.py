@@ -4,10 +4,22 @@ import re
 import json
 import logging
 import webbrowser
+
 from urllib import urlencode
+from requests.packages.urllib3.util.retry import Retry
 
 import requests
+from requests.adapters import HTTPAdapter
+
 import iso8601
+import binascii
+
+KB = 1024
+MB = 1024 * KB
+
+# Read and write operations are limited to this chunk size.
+# This can make a big difference when dealing with large files.
+CHUNK_SIZE = 256 * KB
 
 BASE_URL = 'https://api.put.io/v2'
 ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
@@ -56,6 +68,16 @@ class Client(object):
     def __init__(self, access_token):
         self.access_token = access_token
         self.session = requests.session()
+
+        # Retry maximum 10 times, backoff on each retry
+        # Sleeps 1s, 2s, 4s, 8s, etc to a maximum of 120s between retries
+        # Retries on HTTP status codes 500, 502, 503, 504
+        retries = Retry(total=10,
+                        backoff_factor=1,
+                        status_forcelist=[ 500, 502, 503, 504 ])
+
+        # Use the retry strategy for all HTTPS requests
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
         # Keep resource classes as attributes of client.
         # Pass client to resource classes so resource object
@@ -165,11 +187,11 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
 
-    def download(self, dest='.', delete_after_download=False):
+    def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download)
         else:
-            self._download_file(dest, delete_after_download)
+            self._download_file(dest, delete_after_download, chunk_size)
 
     def _download_directory(self, dest='.', delete_after_download=False):
         name = self.name
@@ -186,24 +208,60 @@ class _File(_BaseResource):
         if delete_after_download:
             self.delete()
 
-    def _download_file(self, dest='.', delete_after_download=False):
-        response = self.client.request(
-            '/files/%s/download' % self.id, raw=True, stream=True)
+    def _verify_file(self, filepath, chunk_size):
+        filesize = os.path.getsize(filepath)
 
-        filename = re.match(
-            'attachment; filename=(.*)',
-            response.headers['content-disposition']).groups()[0]
-        # If file name has spaces, it must have quotes around.
-        filename = filename.strip('"')
+        if self.size != filesize:
+            logging.error('file %s is %d bytes, should be %s bytes' % (filepath, filesize, self.size))
+            return False
 
-        with open(os.path.join(dest, filename), 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-                    f.flush()
+        crcbin = 0
 
-        if delete_after_download:
-            self.delete()
+        # Files could be very large, so don't try to open them in one go
+        with open(filepath, 'rb') as f:
+            while True:
+                chunk = f.read(chunk_size)
+
+                if not chunk:
+                    break
+
+                crcbin = binascii.crc32(chunk, crcbin) & 0xffffffff
+
+        crc32 = '%08x' % crcbin
+
+        if crc32 != self.crc32:
+            logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, self.crc32))
+            return False
+
+        return True
+
+    def _download_file(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
+        filepath = os.path.join(dest, self.name)
+
+        if os.path.exists(filepath):
+            first_byte = os.path.getsize(filepath)
+
+            if first_byte == self.size:
+                logging.warning('file %s exists and is the correct size %d' % (filepath, self.size))
+        else:
+            first_byte = 0
+
+        logging.debug('file %s is currently %d, should be %d' % (filepath, first_byte, self.size))
+
+        if first_byte < self.size:
+            with open(filepath, 'ab') as f:
+                headers = { 'Range': 'bytes=%d-' % first_byte }
+
+                logging.debug('request range: bytes=%d-' % first_byte)
+                response = self.client.request('/files/%s/download' % self.id, headers=headers, raw=True, stream=True)
+
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+    
+        if self._verify_file(filepath, chunk_size):
+            if delete_after_download:
+                self.delete()
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
@@ -254,6 +312,13 @@ class _Transfer(_BaseResource):
     @classmethod
     def clean(cls):
         return cls.client.request('/transfers/clean', method='POST')
+
+    @classmethod
+    def cancel(cls, transfer_ids):
+        transfer_ids = ','.join([ str(transfer_id) for transfer_id in transfer_ids ])
+        return cls.client.request('/transfers/cancel',
+                                  method='POST',
+                                  data={'transfer_ids': transfer_ids})
 
 
 class _Account(_BaseResource):
