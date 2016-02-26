@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='putio.py',
-    version='2.3.4',
+    version='2.4.0',
     author=u'Cenk Altı',
     author_email='cenkalti@gmail.com',
     url='http://github.com/cenkalti/putio.py',
