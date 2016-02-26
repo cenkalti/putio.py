@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import re
 import json
 import logging
 import webbrowser
@@ -74,7 +73,7 @@ class Client(object):
             # Retries on HTTP status codes 500, 502, 503, 504
             retries = Retry(total=10,
                             backoff_factor=1,
-                            status_forcelist=[ 500, 502, 503, 504 ])
+                            status_forcelist=[500, 502, 503, 504])
 
             # Use the retry strategy for all HTTPS requests
             self.session.mount('https://', HTTPAdapter(max_retries=retries))
@@ -189,11 +188,11 @@ class _File(_BaseResource):
 
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
-            self._download_directory(dest, delete_after_download)
+            self._download_directory(dest, delete_after_download, chunk_size)
         else:
             self._download_file(dest, delete_after_download, chunk_size)
 
-    def _download_directory(self, dest='.', delete_after_download=False):
+    def _download_directory(self, dest, delete_after_download, chunk_size):
         name = self.name
         if isinstance(name, unicode):
             name = name.encode('utf-8', 'replace')
@@ -203,25 +202,22 @@ class _File(_BaseResource):
             os.mkdir(dest)
 
         for sub_file in self.dir():
-            sub_file.download(dest, delete_after_download)
+            sub_file.download(dest, delete_after_download, chunk_size)
 
         if delete_after_download:
             self.delete()
 
     def _verify_file(self, filepath):
+        logger.info('verifying crc32...')
         filesize = os.path.getsize(filepath)
-
         if self.size != filesize:
             logging.error('file %s is %d bytes, should be %s bytes' % (filepath, filesize, self.size))
             return False
 
         crcbin = 0
-
-        # Files could be very large, so don't try to open them in one go
         with open(filepath, 'rb') as f:
             while True:
-                chunk = f.read(256 * 1024) # Chunk size is 256kb
-
+                chunk = f.read(CHUNK_SIZE)
                 if not chunk:
                     break
 
@@ -235,9 +231,12 @@ class _File(_BaseResource):
 
         return True
 
-    def _download_file(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
-        filepath = os.path.join(dest, self.name)
+    def _download_file(self, dest, delete_after_download, chunk_size):
+        name = self.name
+        if isinstance(name, unicode):
+            name = name.encode('utf-8', 'replace')
 
+        filepath = os.path.join(dest, name.encode('utf8'))
         if os.path.exists(filepath):
             first_byte = os.path.getsize(filepath)
 
@@ -250,7 +249,7 @@ class _File(_BaseResource):
 
         if first_byte < self.size:
             with open(filepath, 'ab') as f:
-                headers = { 'Range': 'bytes=%d-' % first_byte }
+                headers = {'Range': 'bytes=%d-' % first_byte}
 
                 logger.debug('request range: bytes=%d-' % first_byte)
                 response = self.client.request('/files/%s/download' % self.id,
@@ -316,12 +315,10 @@ class _Transfer(_BaseResource):
     def clean(cls):
         return cls.client.request('/transfers/clean', method='POST')
 
-    @classmethod
-    def cancel(cls, transfer_ids):
-        transfer_ids = ','.join([ str(transfer_id) for transfer_id in transfer_ids ])
-        return cls.client.request('/transfers/cancel',
-                                  method='POST',
-                                  data={'transfer_ids': transfer_ids})
+    def cancel(self):
+        return self.client.request('/transfers/cancel',
+                                   method='POST',
+                                   data={'transfer_ids': self.id})
 
 
 class _Account(_BaseResource):
