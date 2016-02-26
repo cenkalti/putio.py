@@ -267,7 +267,12 @@ class _File(_BaseResource):
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
-                                   data={'file_ids': str(self.id)})
+                                   data={'file_id': str(self.id)})
+
+    @classmethod
+    def delete_multi(cls, ids):
+        return cls.client.request('/files/delete', method='POST',
+                                  data={'file_ids': ','.join(ids)})
 
     def move(self, parent_id):
         return self.client.request('/files/move', method='POST',
@@ -319,6 +324,12 @@ class _Transfer(_BaseResource):
         return self.client.request('/transfers/cancel',
                                    method='POST',
                                    data={'transfer_ids': self.id})
+
+    @classmethod
+    def cancel_multi(cls, ids):
+        return cls.client.request('/transfers/cancel',
+                                  method='POST',
+                                  data={'transfer_ids': ','.join(ids)})
 
 
 class _Account(_BaseResource):
