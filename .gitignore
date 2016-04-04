@@ -1,3 +1,4 @@
+*.pyc
 build/
 dist/
 putio.py.egg-info/

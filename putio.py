@@ -236,7 +236,7 @@ class _File(_BaseResource):
         if isinstance(name, unicode):
             name = name.encode('utf-8', 'replace')
 
-        filepath = os.path.join(dest, name.encode('utf8'))
+        filepath = os.path.join(dest, name)
         if os.path.exists(filepath):
             first_byte = os.path.getsize(filepath)
 
@@ -247,19 +247,24 @@ class _File(_BaseResource):
 
         logger.debug('file %s is currently %d, should be %d' % (filepath, first_byte, self.size))
 
-        if first_byte < self.size:
-            with open(filepath, 'ab') as f:
-                headers = {'Range': 'bytes=%d-' % first_byte}
+        if self.size == 0:
+            # Create an empty file
+            open(filepath, 'w').close()
+            logger.debug('created empty file %s' % filepath)
+        else:
+            if first_byte < self.size:
+                with open(filepath, 'ab') as f:
+                    headers = {'Range': 'bytes=%d-' % first_byte}
 
-                logger.debug('request range: bytes=%d-' % first_byte)
-                response = self.client.request('/files/%s/download' % self.id,
-                                               headers=headers,
-                                               raw=True,
-                                               stream=True)
+                    logger.debug('request range: bytes=%d-' % first_byte)
+                    response = self.client.request('/files/%s/download' % self.id,
+                                                headers=headers,
+                                                raw=True,
+                                                stream=True)
 
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    if chunk:  # filter out keep-alive new chunks
-                        f.write(chunk)
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:  # filter out keep-alive new chunks
+                            f.write(chunk)
 
         if self._verify_file(filepath):
             if delete_after_download:
