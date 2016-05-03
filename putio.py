@@ -140,7 +140,7 @@ class _BaseResource(object):
         self.name = None
         self.__dict__.update(resource_dict)
         try:
-            self.created_at = datetime.strptime(self.created_at, '%Y-%m-%dT%H:%M:%S')
+            self.created_at = strptime(self.created_at)
         except Exception:
             self.created_at = None
 
