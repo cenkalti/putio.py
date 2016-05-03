@@ -3,7 +3,8 @@ from setuptools import setup
 
 setup(
     name='putio.py',
-    version='2.4.4',
+    description='Python client for put.io API v2',
+    version='2.4.5',
     author=u'Cenk Altı',
     author_email='cenkalti@gmail.com',
     url='http://github.com/cenkalti/putio.py',
