@@ -140,7 +140,7 @@ class _BaseResource(object):
         self.name = None
         self.__dict__.update(resource_dict)
         try:
-            self.created_at = datetime.strptime(self.created_at, '%Y-%m-%dT%H:%M:%S')
+            self.created_at = strptime(self.created_at)
         except Exception:
             self.created_at = None
 
@@ -345,3 +345,21 @@ class _Account(_BaseResource):
     @classmethod
     def settings(cls):
         return cls.client.request('/account/settings', method='GET')
+
+
+# Due to a nasty bug in datetime module, datetime.strptime calls
+# are not thread-safe and can throw a TypeError. Details: https://bugs.python.org/issue7980
+# Here we are implementing simple RFC3339 parser which is used in Put.io APIv2.
+def strptime(date):
+    """Returns datetime object from the given date, which is in a specific format: YYYY-MM-ddTHH:mm:ss"""
+    d = {
+            'year': date[0:4],
+            'month': date[5:7],
+            'day': date[8:10],
+            'hour': date[11:13],
+            'minute': date[14:16],
+            'second': date[17:],
+            }
+
+    d = dict((k, int(v)) for k, v in d.iteritems())
+    return datetime(**d)
