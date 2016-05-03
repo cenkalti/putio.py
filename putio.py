@@ -2,15 +2,14 @@
 import os
 import json
 import logging
+import binascii
 import webbrowser
 from urllib import urlencode
+from datetime import datetime
 
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-
-import iso8601
-import binascii
 
 KB = 1024
 MB = 1024 * KB
@@ -141,8 +140,8 @@ class _BaseResource(object):
         self.name = None
         self.__dict__.update(resource_dict)
         try:
-            self.created_at = iso8601.parse_date(self.created_at)
-        except (AttributeError, iso8601.ParseError):
+            self.created_at = datetime.strptime(self.created_at, '%Y-%m-%dT%H:%M:%S')
+        except Exception:
             self.created_at = None
 
     def __str__(self):
