@@ -361,5 +361,5 @@ def strptime(date):
             'second': date[17:],
             }
 
-    d = {k: int(v) for k, v in d.iteritems()}
+    d = dict((k, int(v)) for k, v in d.iteritems())
     return datetime(**d)
