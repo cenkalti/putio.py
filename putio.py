@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import json
 import logging
-import binascii
+import time
 import webbrowser
 from urllib import urlencode
 from datetime import datetime
@@ -23,7 +24,6 @@ ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
 AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 
 logger = logging.getLogger(__name__)
-
 
 class AuthHelper(object):
 
@@ -177,9 +177,27 @@ class _File(_BaseResource):
                 files = {'file': f}
             d = cls.client.request('/files/upload', method='POST',
                                    data={'parent_id': parent_id}, files=files)
-
+        logger.info(d)
         f = d['file']
         return cls(f)
+
+    @classmethod
+    def createZip(cls,file_ids):
+        d = cls.client.request('/files/zip',
+                                method='GET',params={'file_ids': file_ids})
+        if d['status'] == "OK":
+            zip_id = d['zip_id']
+            notReady = True
+	    while notReady:
+	        time.sleep(5)
+                d = cls.client.request('/zips/%i' % zip_id, method='GET')
+                #logger.info(d)
+                if d['url'] != False:
+                    notReady= False
+            return d['url']
+        else:
+            return None
+
 
     def dir(self):
         """List the files under directory."""
@@ -285,6 +303,7 @@ class _File(_BaseResource):
     def rename(self, name):
         return self.client.request('/files/rename', method='POST',
                                    data={'file_id': str(self.id), 'name': str(name)})
+
 
 
 class _Transfer(_BaseResource):
