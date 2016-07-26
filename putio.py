@@ -177,12 +177,11 @@ class _File(_BaseResource):
                 files = {'file': f}
             d = cls.client.request('/files/upload', method='POST',
                                    data={'parent_id': parent_id}, files=files)
-        logger.info(d)
         f = d['file']
         return cls(f)
 
     @classmethod
-    def createZip(cls,file_ids):
+    def createZip(cls, file_ids):
         d = cls.client.request('/files/zip',
                                 method='GET',params={'file_ids': file_ids})
         if d['status'] == "OK":
@@ -191,13 +190,11 @@ class _File(_BaseResource):
 	    while notReady:
 	        time.sleep(5)
                 d = cls.client.request('/zips/%i' % zip_id, method='GET')
-                #logger.info(d)
                 if d['url'] != False:
                     notReady= False
             return d['url']
         else:
-            return None
-
+            raise Exception('Server could not create the zip')
 
     def dir(self):
         """List the files under directory."""
@@ -303,7 +300,6 @@ class _File(_BaseResource):
     def rename(self, name):
         return self.client.request('/files/rename', method='POST',
                                    data={'file_id': str(self.id), 'name': str(name)})
-
 
 
 class _Transfer(_BaseResource):
