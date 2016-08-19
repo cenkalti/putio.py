@@ -124,6 +124,7 @@ class Client(object):
                 response, response.content))
 
         if response['status'] == 'ERROR':
+            logger.error("API returned error: %s", response)
             raise Exception(response['error_type'])
 
         return response
