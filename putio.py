@@ -25,6 +25,18 @@ AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 logger = logging.getLogger(__name__)
 
 
+class APIError(Exception):
+    pass
+
+
+class ClientError(APIError):
+    pass
+
+
+class ServerError(APIError):
+    pass
+
+
 class AuthHelper(object):
 
     def __init__(self, client_id, client_secret, redirect_uri, type='code'):
@@ -118,16 +130,17 @@ class Client(object):
 
         logger.debug('content: %s', response.content)
         try:
-            response = json.loads(response.content)
+            body = json.loads(response.content)
         except ValueError:
             raise Exception('Server didn\'t send valid JSON:\n%s\n%s' % (
                 response, response.content))
 
-        if response['status'] == 'ERROR':
-            logger.error("API returned error: %s", response)
-            raise Exception(response['error_type'])
+        if body['status'] == 'ERROR':
+            logger.error("API returned error: %s", body)
+            exception_class = {'4': ClientError, '5': ServerError}[str(response.status_code)[0]]
+            raise exception_class(body['error_type'], body['error_message'])
 
-        return response
+        return body
 
 
 class _BaseResource(object):
