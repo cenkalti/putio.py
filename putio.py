@@ -132,8 +132,7 @@ class Client(object):
         try:
             body = json.loads(response.content)
         except ValueError:
-            raise Exception('Server didn\'t send valid JSON:\n%s\n%s' % (
-                response, response.content))
+            raise ServerError('InvalidJSON', response.content)
 
         if body['status'] == 'ERROR':
             logger.error("API returned error: %s", body)
