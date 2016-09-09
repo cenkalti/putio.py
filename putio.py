@@ -270,9 +270,9 @@ class _File(_BaseResource):
 
                     logger.debug('request range: bytes=%d-' % first_byte)
                     response = self.client.request('/files/%s/download' % self.id,
-                                                headers=headers,
-                                                raw=True,
-                                                stream=True)
+                                                   headers=headers,
+                                                   raw=True,
+                                                   stream=True)
 
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:  # filter out keep-alive new chunks
