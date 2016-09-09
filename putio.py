@@ -19,6 +19,7 @@ MB = 1024 * KB
 CHUNK_SIZE = 256 * KB
 
 BASE_URL = 'https://api.put.io/v2'
+UPLOAD_URL = 'https://upload.put.io/v2/files/upload'
 ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
 AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 
@@ -118,7 +119,10 @@ class Client(object):
 
         headers['Accept'] = 'application/json'
 
-        url = BASE_URL + path
+        if path.startswith('https://'):
+            url = path
+        else:
+            url = BASE_URL + path
         logger.debug('url: %s', url)
 
         response = self.session.request(
@@ -188,7 +192,7 @@ class _File(_BaseResource):
                 files = {'file': (name, f)}
             else:
                 files = {'file': f}
-            d = cls.client.request('/files/upload', method='POST',
+            d = cls.client.request(UPLOAD_URL, method='POST',
                                    data={'parent_id': parent_id}, files=files)
 
         f = d['file']
