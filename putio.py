@@ -366,13 +366,13 @@ class _Account(_BaseResource):
 def strptime(date):
     """Returns datetime object from the given date, which is in a specific format: YYYY-MM-ddTHH:mm:ss"""
     d = {
-            'year': date[0:4],
-            'month': date[5:7],
-            'day': date[8:10],
-            'hour': date[11:13],
-            'minute': date[14:16],
-            'second': date[17:],
-            }
+        'year': date[0:4],
+        'month': date[5:7],
+        'day': date[8:10],
+        'hour': date[11:13],
+        'minute': date[14:16],
+        'second': date[17:],
+    }
 
     d = dict((k, int(v)) for k, v in d.iteritems())
     return datetime(**d)
