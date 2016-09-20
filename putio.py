@@ -331,7 +331,7 @@ class _Transfer(_BaseResource):
         with open(path, 'rb') as f:
             files = {'file': f}
             d = cls.client.request('/files/upload', method='POST', files=files,
-                                   data=dict(save_parent_id=parent_id,
+                                   data=dict(parent_id=parent_id,
                                              extract=extract,
                                              callback_url=callback_url))
         t = d['transfer']
