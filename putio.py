@@ -99,7 +99,7 @@ class Client(object):
         self.Account = type('Account', (_Account,), attributes)
 
     def request(self, path, method='GET', params=None, data=None, files=None,
-                headers=None, raw=False, stream=False):
+                headers=None, raw=False, allow_redirects=True, stream=False):
         """
         Wrapper around requests.request()
 
@@ -127,7 +127,7 @@ class Client(object):
 
         response = self.session.request(
             method, url, params=params, data=data, files=files,
-            headers=headers, allow_redirects=True, stream=stream)
+            headers=headers, allow_redirects=allow_redirects, stream=stream)
         logger.debug('response: %s', response)
         if raw:
             return response
