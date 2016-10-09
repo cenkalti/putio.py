@@ -12,5 +12,5 @@ setup(
     include_package_data=True,
     zip_safe=True,
     platforms='any',
-    install_requires=['requests'],
+    install_requires=['requests', 'tus.py'],
 )

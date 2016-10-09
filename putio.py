@@ -7,6 +7,7 @@ import webbrowser
 from urllib import urlencode
 from datetime import datetime
 
+import tus
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -20,6 +21,7 @@ CHUNK_SIZE = 256 * KB
 
 BASE_URL = 'https://api.put.io/v2'
 UPLOAD_URL = 'https://upload.put.io/v2/files/upload'
+TUS_UPLOAD_URL = 'https://upload.put.io/files/'
 ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
 AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
 
@@ -197,6 +199,15 @@ class _File(_BaseResource):
 
         f = d['file']
         return cls(f)
+
+    @classmethod
+    def upload_tus(cls, path, name=None, parent_id=0):
+        headers = {'Authorization': 'token %s' % cls.client.access_token}
+        metadata = {'parent_id': str(parent_id)}
+        if name:
+            metadata['name'] = name
+        with open(path) as f:
+            tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
 
     def dir(self):
         """List the files under directory."""
