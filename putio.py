@@ -216,14 +216,6 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
 
-    def _unicodize(self, name):
-        try:
-            if isinstance(name, unicode):
-                return name.encode('utf-8', 'replace')
-        except NameError:
-            pass
-        return name
-
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download, chunk_size)
@@ -231,7 +223,7 @@ class _File(_BaseResource):
             self._download_file(dest, delete_after_download, chunk_size)
 
     def _download_directory(self, dest, delete_after_download, chunk_size):
-        name = self._unicodize(self.name)
+        name = _str(self.name)
 
         dest = os.path.join(dest, name)
         if not os.path.exists(dest):
@@ -268,7 +260,7 @@ class _File(_BaseResource):
         return True
 
     def _download_file(self, dest, delete_after_download, chunk_size):
-        name = self._unicodize(self.name)
+        name = _str(self.name)
 
         filepath = os.path.join(dest, name)
         if os.path.exists(filepath):
@@ -398,3 +390,13 @@ def strptime(date):
 
     d = dict((k, int(v)) for k, v in d.iteritems())
     return datetime(**d)
+
+
+def _str(s):
+    """Python 3 compatibility function for converting to str."""
+    try:
+        if isinstance(s, unicode):
+            return s.encode('utf-8', 'replace')
+    except NameError:
+        pass
+    return s
