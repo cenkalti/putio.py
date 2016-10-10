@@ -172,7 +172,7 @@ class _BaseResource(object):
     def __repr__(self):
         # shorten name for display
         name = self.name[:17] + '...' if len(self.name) > 20 else self.name
-        return '<%s id=%r, name="%r">' % (
+        return '<%s id=%r, name=%r>' % (
             self.__class__.__name__, self.id, name)
 
 
