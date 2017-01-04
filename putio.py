@@ -150,7 +150,7 @@ class Client(object):
 
         headers['Accept'] = 'application/json'
 
-        if path.startswith('https://'):
+        if path.startswith(('http://', 'https://')):
             url = path
         else:
             url = BASE_URL + path
