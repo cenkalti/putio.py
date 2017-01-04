@@ -125,9 +125,7 @@ class AuthHelper(object):
             'code': code
         }
         response = requests.get(ACCESS_TOKEN_URL, params=params)
-        logger.debug(response)
-        assert response.status_code == 200
-        return response.json()['access_token']
+        return _process_response(response)['access_token']
 
 
 class Client(object):
@@ -192,18 +190,49 @@ class Client(object):
         if raw:
             return response
 
-        logger.debug('content: %s', response.content)
+        return _process_response(response)
+
+
+def _process_response(response):
+    logger.debug('response: %s', response)
+    logger.debug('content: %s', response.content)
+
+    http_error_type = str(response.status_code)[0]
+    exception_classes = {
+            '2': None,
+            '4': ClientError,
+            '5': ServerError,
+    }
+
+    try:
+        exception_class = exception_classes[http_error_type]
+    except KeyError:
+        raise APIError(response, 'InvalidStatusCode', str(response.status_code))
+
+    if exception_class:
         try:
-            body = json.loads(response.content.decode())
-        except ValueError:
-            raise ServerError('InvalidJSON', response.content)
+            d = _parse_content(response)
+            error_type = d['error_type']
+            error_message = d['error_message']
+        except Exception:
+            error_type = 'UnknownError'
+            error_message = None
 
-        if body['status'] == 'ERROR':
-            logger.error("API returned error: %s", body)
-            exception_class = {'4': ClientError, '5': ServerError}[str(response.status_code)[0]]
-            raise exception_class(body['error_type'], body['error_message'])
+        raise APIError(response, error_type, error_message)
 
-        return body
+    return _parse_content(response)
+
+
+def _parse_content(response):
+    try:
+        u = response.content.decode('utf-8')
+    except ValueError:
+        raise APIError(response, 'InvalidEncoding', 'cannot decode as UTF-8')
+
+    try:
+        return json.loads(u)
+    except ValueError:
+        raise APIError(response, 'InvalidJSON')
 
 
 class _BaseResource(object):
