@@ -339,6 +339,13 @@ class _File(_BaseResource):
         return self.client.request('/files/rename', method='POST',
                                    data={'file_id': str(self.id), 'name': str(name)})
 
+    @classmethod
+    def create_folder(cls, name, parent_id=0):
+        r = cls.client.request('/files/create-folder', method='POST',
+                               data={'name': name, 'parent_id': str(parent_id)})
+        f = r['file']
+        return cls(f)
+
 
 class _Transfer(_BaseResource):
 
