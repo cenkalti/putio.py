@@ -351,6 +351,23 @@ class _File(_BaseResource):
             if delete_after_download:
                 self.delete()
 
+    def get_stream_link(self, tunnel=True):
+        path = '/files/%d/stream' % self.id
+        params = {}
+        if not tunnel:
+            params['notunnel'] = '1'
+
+        response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
+        if str(response.status_code)[0] == '2':
+            return response.url
+        elif response.status_code != 302:
+            raise APIError(response, 'UnexpectedStatusCode')
+
+        try:
+            return response.headers['Location']
+        except KeyError:
+            raise APIError(response, 'NoLocationHeader', 'no "location" header in response')
+
     def delete(self):
         return self.client.request('/files/delete', method='POST',
                                    data={'file_id': str(self.id)})
