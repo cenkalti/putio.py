@@ -126,6 +126,9 @@ class Client(object):
         self.Transfer = type('Transfer', (_Transfer,), attributes)
         self.Account = type('Account', (_Account,), attributes)
 
+    def close(self):
+        self.session.close()
+
     def request(self, path, method='GET', params=None, data=None, files=None,
                 headers=None, raw=False, allow_redirects=True, stream=False):
         """
