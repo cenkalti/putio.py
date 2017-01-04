@@ -55,7 +55,36 @@ _set_domain()
 
 
 class APIError(Exception):
-    pass
+    """
+    Must be created with following arguments:
+        1. Response instance (requests.Response)
+        2. Type of the error (str)
+        3. Extra detail about the error (str, optional)
+    """
+
+    def __str__(self):
+        s = "%s, %s, %d, %s" % (
+                self.response.request.method,
+                self.response.request.url,
+                self.response.status_code,
+                self.type,
+        )
+        if self.message:
+            s += ', %r' % self.message
+        return s
+
+    @property
+    def response(self):
+        return self.args[0]
+
+    @property
+    def type(self):
+        return self.args[1]
+
+    @property
+    def message(self):
+        if len(self.args) > 2:
+            return self.args[2]
 
 
 class ClientError(APIError):
