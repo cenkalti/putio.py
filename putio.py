@@ -128,6 +128,14 @@ class AuthHelper(object):
         return _process_response(response)['access_token']
 
 
+def create_access_token(client_id, client_secret, user, password):
+    url = AUTHORIZATION_URL.format(client_id=client_id)
+    data = {'client_secret': client_secret}
+    auth = (user, password)
+    response = requests.put(url, data=data, auth=auth)
+    return _process_response(response)['access_token']
+
+
 class Client(object):
 
     def __init__(self, access_token, use_retry=False):
