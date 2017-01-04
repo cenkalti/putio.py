@@ -22,13 +22,36 @@ MB = 1024 * KB
 # This can make a big difference when dealing with large files.
 CHUNK_SIZE = 256 * KB
 
-BASE_URL = 'https://api.put.io/v2'
-UPLOAD_URL = 'https://upload.put.io/v2/files/upload'
-TUS_UPLOAD_URL = 'https://upload.put.io/files/'
-ACCESS_TOKEN_URL = 'https://api.put.io/v2/oauth2/access_token'
-AUTHENTICATION_URL = 'https://api.put.io/v2/oauth2/authenticate'
+BASE_URL = None
+UPLOAD_URL = None
+TUS_UPLOAD_URL = None
+ACCESS_TOKEN_URL = None
+AUTHENTICATION_URL = None
+AUTHORIZATION_URL = None
 
 logger = logging.getLogger(__name__)
+
+
+def _set_domain(domain='put.io', scheme='https'):
+    global BASE_URL
+    global UPLOAD_URL
+    global TUS_UPLOAD_URL
+    global ACCESS_TOKEN_URL
+    global AUTHENTICATION_URL
+    global AUTHORIZATION_URL
+
+    api_base = '{scheme}://api.{domain}/v2'.format(scheme=scheme, domain=domain)
+    upload_base = '{scheme}://upload.{domain}'.format(scheme=scheme, domain=domain)
+
+    BASE_URL = api_base
+    UPLOAD_URL = upload_base + '/v2/files/upload'
+    TUS_UPLOAD_URL = upload_base + '/files'
+    ACCESS_TOKEN_URL = api_base + '/oauth2/access_token'
+    AUTHENTICATION_URL = api_base + '/oauth2/authenticate'
+    AUTHORIZATION_URL = api_base + '/oauth2/authorizations/clients/{client_id}'
+
+
+_set_domain()
 
 
 class APIError(Exception):
