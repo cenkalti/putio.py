@@ -397,13 +397,14 @@ class _File(_BaseResource):
         response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
         if str(response.status_code)[0] == '2':
             return response.url
-        elif response.status_code != 302:
-            raise APIError(response, 'UnexpectedStatusCode')
+        elif response.status_code == 302:
+            try:
+                return response.headers['Location']
+            except KeyError:
+                raise APIError(response, 'NoLocationHeader', 'no "location" header in response')
 
-        try:
-            return response.headers['Location']
-        except KeyError:
-            raise APIError(response, 'NoLocationHeader', 'no "location" header in response')
+        # Raises excetpion on 4xx and 5xx
+        _process_response(response)
 
     def delete(self):
         return self.client.request('/files/delete', method='POST',
