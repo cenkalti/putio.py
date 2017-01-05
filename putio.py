@@ -215,7 +215,7 @@ def _process_response(response):
     try:
         exception_class = exception_classes[http_error_type]
     except KeyError:
-        raise APIError(response, 'InvalidStatusCode', str(response.status_code))
+        raise ServerError(response, 'InvalidStatusCode', str(response.status_code))
 
     if exception_class:
         try:
@@ -226,7 +226,7 @@ def _process_response(response):
             error_type = 'UnknownError'
             error_message = None
 
-        raise APIError(response, error_type, error_message)
+        raise ServerError(response, error_type, error_message)
 
     return _parse_content(response)
 
@@ -235,12 +235,12 @@ def _parse_content(response):
     try:
         u = response.content.decode('utf-8')
     except ValueError:
-        raise APIError(response, 'InvalidEncoding', 'cannot decode as UTF-8')
+        raise ServerError(response, 'InvalidEncoding', 'cannot decode as UTF-8')
 
     try:
         return json.loads(u)
     except ValueError:
-        raise APIError(response, 'InvalidJSON')
+        raise ServerError(response, 'InvalidJSON')
 
 
 class _BaseResource(object):
@@ -398,10 +398,7 @@ class _File(_BaseResource):
         if str(response.status_code)[0] == '2':
             return response.url
         elif response.status_code == 302:
-            try:
-                return response.headers['Location']
-            except KeyError:
-                raise APIError(response, 'NoLocationHeader', 'no "location" header in response')
+            return response.headers['Location']
 
         # Raises excetpion on 4xx and 5xx
         _process_response(response)
