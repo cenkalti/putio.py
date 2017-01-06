@@ -226,7 +226,7 @@ def _process_response(response):
             error_type = 'UnknownError'
             error_message = None
 
-        raise ServerError(response, error_type, error_message)
+        raise exception_class(response, error_type, error_message)
 
     return _parse_content(response)
 
