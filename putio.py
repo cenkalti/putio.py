@@ -403,14 +403,18 @@ class _File(_BaseResource):
         # Raises excetpion on 4xx and 5xx
         _process_response(response)
 
-    def delete(self):
-        return self.client.request('/files/delete', method='POST',
-                                   data={'file_id': str(self.id)})
+    def delete(self, skip_nonexistents=False):
+        data = {'file_id': self.id}
+        if skip_nonexistents:
+            data['skip_nonexistents'] = 1
+        return self.client.request('/files/delete', method='POST', data=data)
 
     @classmethod
-    def delete_multi(cls, ids):
-        return cls.client.request('/files/delete', method='POST',
-                                  data={'file_ids': ','.join(map(str, ids))})
+    def delete_multi(cls, ids, skip_nonexistents=False):
+        data = {'file_ids': ','.join(map(str, ids))}
+        if skip_nonexistents:
+            data['skip_nonexistents'] = 1
+        return cls.client.request('/files/delete', method='POST', data=data)
 
     def move(self, parent_id):
         return self.client.request('/files/move', method='POST',
