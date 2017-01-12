@@ -1,14 +1,15 @@
-# -*- coding: utf-8 -*-
-
+# coding=utf-8
 import os
-import putio
 import shutil
 import tempfile
 import unittest
 
+import putiopy
+
+
 class TestCase(unittest.TestCase):
     def setUp(self):
-        self.client = putio.Client('123456')
+        self.client = putiopy.Client('123456')
         self.destination = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -44,6 +45,7 @@ class TestCase(unittest.TestCase):
 
     def test_regular_non_ascii_unicode(self):
         self._test_file_download(u'Röyksopp')
+
 
 if __name__ == '__main__':
     unittest.main()
