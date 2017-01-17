@@ -19,16 +19,16 @@ Usage
 
 .. code-block:: python
 
-    import putio
+    import putiopy
 
-    helper = putio.AuthHelper(CLIENT_ID, CLIENT_SECRET, \
+    helper = putiopy.AuthHelper(CLIENT_ID, CLIENT_SECRET, \
                               CALLBACK_URL, type='token')
 
     # this will open a browser to authetication url
     # after authenticating you will find the oauth_token in the address bar
     helper.open_authentication_url()
 
-    client = putio.Client(OAUTH_TOKEN)
+    client = putiopy.Client(OAUTH_TOKEN)
 
     # list files
     files = client.File.list()
