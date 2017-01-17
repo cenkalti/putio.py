@@ -141,7 +141,9 @@ class Client(object):
     def __init__(self, access_token, use_retry=False, extra_headers=None):
         self.access_token = access_token
         self.session = requests.session()
-        self.extra_headers = extra_headers
+        self.session.headers['Accept'] = 'application/json'
+        if extra_headers:
+            self.session.headers.update(extra_headers)
 
         if use_retry:
             # Retry maximum 10 times, backoff on each retry
@@ -178,13 +180,8 @@ class Client(object):
         if not params:
             params = {}
 
-        _headers = {'Accept': 'application/json'}
-
-        if self.extra_headers:
-            _headers.update(self.extra_headers)
-
-        if headers:
-            _headers.update(headers)
+        if not headers:
+            headers = {}
 
         # All requests must include oauth_token
         params['oauth_token'] = self.access_token
@@ -197,7 +194,7 @@ class Client(object):
 
         response = self.session.request(
             method, url, params=params, data=data, files=files,
-            headers=_headers, allow_redirects=allow_redirects, stream=stream)
+            headers=headers, allow_redirects=allow_redirects, stream=stream)
         logger.debug('response: %s', response)
         if raw:
             return response
