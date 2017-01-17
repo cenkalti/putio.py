@@ -138,9 +138,10 @@ def create_access_token(client_id, client_secret, user, password):
 
 class Client(object):
 
-    def __init__(self, access_token, use_retry=False):
+    def __init__(self, access_token, use_retry=False, extra_headers=None):
         self.access_token = access_token
         self.session = requests.session()
+        self.extra_headers = extra_headers
 
         if use_retry:
             # Retry maximum 10 times, backoff on each retry
@@ -177,13 +178,16 @@ class Client(object):
         if not params:
             params = {}
 
-        if not headers:
-            headers = {}
+        _headers = {'Accept': 'application/json'}
+
+        if self.extra_headers:
+            _headers.update(self.extra_headers)
+
+        if self.headers:
+            _headers.update(headers)
 
         # All requests must include oauth_token
         params['oauth_token'] = self.access_token
-
-        headers['Accept'] = 'application/json'
 
         if path.startswith(('http://', 'https://')):
             url = path
@@ -193,7 +197,7 @@ class Client(object):
 
         response = self.session.request(
             method, url, params=params, data=data, files=files,
-            headers=headers, allow_redirects=allow_redirects, stream=stream)
+            headers=_headers, allow_redirects=allow_redirects, stream=stream)
         logger.debug('response: %s', response)
         if raw:
             return response
