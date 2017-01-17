@@ -183,7 +183,7 @@ class Client(object):
         if self.extra_headers:
             _headers.update(self.extra_headers)
 
-        if self.headers:
+        if headers:
             _headers.update(headers)
 
         # All requests must include oauth_token
