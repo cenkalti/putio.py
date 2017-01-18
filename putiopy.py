@@ -173,18 +173,15 @@ class Client(object):
         Wrapper around requests.request()
 
         Prepends BASE_URL to path.
-        Inserts oauth_token to query params.
+        Adds self.oauth_token to authorization header.
         Parses response as JSON and returns it.
 
         """
-        if not params:
-            params = {}
-
         if not headers:
             headers = {}
 
         # All requests must include oauth_token
-        params['oauth_token'] = self.access_token
+        headers['Authorization'] = 'token %s' % self.oauth_token
 
         if path.startswith(('http://', 'https://')):
             url = path
