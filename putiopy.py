@@ -181,7 +181,7 @@ class Client(object):
             headers = {}
 
         # All requests must include oauth_token
-        headers['Authorization'] = 'token %s' % self.oauth_token
+        headers['Authorization'] = 'token %s' % self.access_token
 
         if path.startswith(('http://', 'https://')):
             url = path
