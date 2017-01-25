@@ -30,6 +30,7 @@ AUTHENTICATION_URL = None
 AUTHORIZATION_URL = None
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def _set_domain(domain='put.io', scheme='https'):
@@ -347,12 +348,14 @@ class _File(_BaseResource):
             logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, self.crc32))
             return False
 
+        logger.info('crc OK')
         return True
 
     def _download_file(self, dest, delete_after_download, chunk_size):
         name = _str(self.name)
 
         filepath = os.path.join(dest, name)
+        logger.info('downloading file to: %s', filepath)
         if os.path.exists(filepath):
             first_byte = os.path.getsize(filepath)
 
