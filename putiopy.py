@@ -380,6 +380,9 @@ class _File(_BaseResource):
                                                    headers=headers,
                                                    raw=True,
                                                    stream=True)
+                    if str(response.status_code)[0] != '2':
+                        # Raises exception on 4xx and 5xx
+                        _process_response(response)
 
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:  # filter out keep-alive new chunks
@@ -401,7 +404,7 @@ class _File(_BaseResource):
         elif response.status_code == 302:
             return response.headers['Location']
 
-        # Raises excetpion on 4xx and 5xx
+        # Raises exception on 4xx and 5xx
         _process_response(response)
 
     def delete(self, skip_nonexistents=False):
