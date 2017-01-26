@@ -15,6 +15,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+__version__ = '5.1.0'
+
 KB = 1024
 MB = 1024 * KB
 
@@ -142,6 +144,7 @@ class Client(object):
     def __init__(self, access_token, use_retry=False, extra_headers=None):
         self.access_token = access_token
         self.session = requests.session()
+        self.session.headers['User-Agent'] = 'putio.py/%s' % __version__
         self.session.headers['Accept'] = 'application/json'
         if extra_headers:
             self.session.headers.update(extra_headers)
