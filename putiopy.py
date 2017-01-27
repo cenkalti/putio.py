@@ -6,8 +6,9 @@ import binascii
 import webbrowser
 try:
     from urllib import urlencode
+    from urlparse import urljoin
 except ImportError:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urljoin
 from datetime import datetime
 
 import tus
@@ -190,7 +191,7 @@ class Client(object):
         if path.startswith(('http://', 'https://')):
             url = path
         else:
-            url = BASE_URL + path
+            url = urljoin(BASE_URL, path)
         logger.debug('url: %s', url)
 
         response = self.session.request(
@@ -267,20 +268,20 @@ class _BaseResource(object):
         # shorten name for display
         name = self.name[:17] + '...' if len(self.name) > 20 else self.name
         return '<%s id=%r, name=%r>' % (
-            self.__class__.__name__, self.id, name)
+            type(self).__name__, self.id, name)
 
 
 class _File(_BaseResource):
 
     @classmethod
     def get(cls, id):
-        d = cls.client.request('/files/%i' % id, method='GET')
+        d = cls.client.request('files/%i' % id, method='GET')
         t = d['file']
         return cls(t)
 
     @classmethod
     def list(cls, parent_id=0):
-        d = cls.client.request('/files/list', params={'parent_id': parent_id})
+        d = cls.client.request('files/list', params={'parent_id': parent_id})
         files = d['files']
         return [cls(f) for f in files]
 
@@ -379,7 +380,7 @@ class _File(_BaseResource):
                     headers = {'Range': 'bytes=%d-' % first_byte}
 
                     logger.debug('request range: bytes=%d-' % first_byte)
-                    response = self.client.request('/files/%s/download' % self.id,
+                    response = self.client.request('files/%s/download' % self.id,
                                                    headers=headers,
                                                    raw=True,
                                                    stream=True)
@@ -396,7 +397,7 @@ class _File(_BaseResource):
                 self.delete()
 
     def get_stream_link(self, tunnel=True):
-        path = '/files/%d/stream' % self.id
+        path = 'files/%d/stream' % self.id
         params = {}
         if not tunnel:
             params['notunnel'] = '1'
@@ -414,26 +415,26 @@ class _File(_BaseResource):
         data = {'file_id': self.id}
         if skip_nonexistents:
             data['skip_nonexistents'] = 1
-        return self.client.request('/files/delete', method='POST', data=data)
+        return self.client.request('files/delete', method='POST', data=data)
 
     @classmethod
     def delete_multi(cls, ids, skip_nonexistents=False):
         data = {'file_ids': ','.join(map(str, ids))}
         if skip_nonexistents:
             data['skip_nonexistents'] = 1
-        return cls.client.request('/files/delete', method='POST', data=data)
+        return cls.client.request('files/delete', method='POST', data=data)
 
     def move(self, parent_id):
-        return self.client.request('/files/move', method='POST',
+        return self.client.request('files/move', method='POST',
                                    data={'file_ids': str(self.id), 'parent_id': str(parent_id)})
 
     def rename(self, name):
-        return self.client.request('/files/rename', method='POST',
+        return self.client.request('files/rename', method='POST',
                                    data={'file_id': str(self.id), 'name': str(name)})
 
     @classmethod
     def create_folder(cls, name, parent_id=0):
-        r = cls.client.request('/files/create-folder', method='POST',
+        r = cls.client.request('files/create-folder', method='POST',
                                data={'name': name, 'parent_id': str(parent_id)})
         f = r['file']
         return cls(f)
@@ -443,19 +444,19 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def list(cls):
-        d = cls.client.request('/transfers/list')
+        d = cls.client.request('transfers/list')
         transfers = d['transfers']
         return [cls(t) for t in transfers]
 
     @classmethod
     def get(cls, id):
-        d = cls.client.request('/transfers/%i' % id, method='GET')
+        d = cls.client.request('transfers/%i' % id, method='GET')
         t = d['transfer']
         return cls(t)
 
     @classmethod
     def add_url(cls, url, parent_id=0, extract=False, callback_url=None):
-        d = cls.client.request('/transfers/add', method='POST', data=dict(
+        d = cls.client.request('transfers/add', method='POST', data=dict(
             url=url, save_parent_id=parent_id, extract=extract,
             callback_url=callback_url))
         t = d['transfer']
@@ -465,7 +466,7 @@ class _Transfer(_BaseResource):
     def add_torrent(cls, path, parent_id=0, extract=False, callback_url=None):
         with open(path, 'rb') as f:
             files = {'file': f}
-            d = cls.client.request('/files/upload', method='POST', files=files,
+            d = cls.client.request('files/upload', method='POST', files=files,
                                    data=dict(parent_id=parent_id,
                                              extract=extract,
                                              callback_url=callback_url))
@@ -474,16 +475,16 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def clean(cls):
-        return cls.client.request('/transfers/clean', method='POST')
+        return cls.client.request('transfers/clean', method='POST')
 
     def cancel(self):
-        return self.client.request('/transfers/cancel',
+        return self.client.request('transfers/cancel',
                                    method='POST',
                                    data={'transfer_ids': self.id})
 
     @classmethod
     def cancel_multi(cls, ids):
-        return cls.client.request('/transfers/cancel',
+        return cls.client.request('transfers/cancel',
                                   method='POST',
                                   data={'transfer_ids': ','.join(map(str, ids))})
 
@@ -492,11 +493,11 @@ class _Account(_BaseResource):
 
     @classmethod
     def info(cls):
-        return cls.client.request('/account/info', method='GET')
+        return cls.client.request('account/info', method='GET')
 
     @classmethod
     def settings(cls):
-        return cls.client.request('/account/settings', method='GET')
+        return cls.client.request('account/settings', method='GET')
 
 
 # Due to a nasty bug in datetime module, datetime.strptime calls
