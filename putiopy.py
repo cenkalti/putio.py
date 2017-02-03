@@ -294,8 +294,11 @@ class _File(_BaseResource):
             d = cls.client.request(UPLOAD_URL, method='POST',
                                    data={'parent_id': parent_id}, files=files)
 
-        f = d['file']
-        return cls(f)
+        try:
+            return cls(d['file'])
+        except KeyError:
+            # server returns a transfer info if file is a torrent
+            return cls.client.Transfer(d['transfer'])
 
     @classmethod
     def upload_tus(cls, path, name=None, parent_id=0):
@@ -454,23 +457,25 @@ class _Transfer(_BaseResource):
         return cls(t)
 
     @classmethod
-    def add_url(cls, url, parent_id=0, extract=False, callback_url=None):
-        d = cls.client.request('/transfers/add', method='POST', data=dict(
-            url=url, save_parent_id=parent_id, extract=extract,
-            callback_url=callback_url))
-        t = d['transfer']
-        return cls(t)
+    def add_url(cls, url, parent_id=0, callback_url=None):
+        data = {'url': url, 'save_parent_id': parent_id}
+        if callback_url:
+            data['callback_url'] = callback_url
+
+        d = cls.client.request('/transfers/add', method='POST', data=data)
+        return cls(d['transfer'])
 
     @classmethod
-    def add_torrent(cls, path, parent_id=0, extract=False, callback_url=None):
-        with open(path, 'rb') as f:
+    def add_torrent(cls, path, parent_id=0, callback_url=None):
+        data = {'parent_id': parent_id}
+        if callback_url:
+            data['callback_url'] = callback_url
+
+        with open(path) as f:
             files = {'file': f}
-            d = cls.client.request('/files/upload', method='POST', files=files,
-                                   data=dict(parent_id=parent_id,
-                                             extract=extract,
-                                             callback_url=callback_url))
-        t = d['transfer']
-        return cls(t)
+            d = cls.client.request(UPLOAD_URL, method='POST', data=data, files=files)
+
+        return cls(d['transfer'])
 
     @classmethod
     def clean(cls):
