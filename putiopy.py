@@ -514,11 +514,6 @@ class _Account(_BaseResource):
 class _Subtitle(_BaseResource):
 
     def __init__(self, resource_dict, file_id):
-        self.name = None
-        self.key = None
-        self.language = None
-        self.source = None
-
         self.__dict__.update(resource_dict)
         self.file_id = file_id
 
