@@ -427,7 +427,7 @@ class _File(_BaseResource):
         return response['mp4']['status']
 
     def get_mp4_size(self):
-        if self.get_mp4_status != 'COMPLETED':
+        if self.get_mp4_status() != 'COMPLETED':
             return False
 
         path = '/files/%d/mp4' % self.id
