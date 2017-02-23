@@ -426,6 +426,15 @@ class _File(_BaseResource):
 
         return response['mp4']['status']
 
+    def get_mp4_size(self):
+        if self.get_mp4_status != 'COMPLETED':
+            return False
+
+        path = '/files/%d/mp4' % self.id
+        response = self.client.request(path, method='GET')
+
+        return response['mp4']['size']
+
     def get_stream_link(self, tunnel=True, prefer_mp4=False):
         if prefer_mp4 and self.get_mp4_status() == 'COMPLETED':
             path = '/files/%d/mp4/stream' % self.id
