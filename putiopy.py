@@ -398,8 +398,40 @@ class _File(_BaseResource):
             if delete_after_download:
                 self.delete()
 
-    def get_stream_link(self, tunnel=True):
-        path = '/files/%d/stream' % self.id
+    def ask_for_mp4(self):
+        if self.is_mp4_available:
+            return False
+
+        path = '/files/%d/mp4' % self.id
+        params = {}
+
+        response = self.client.request(path, method='POST', params=params, raw=True)
+
+        try:
+            # Raises exception on 4xx and 5xx
+            _process_response(response)
+        except:
+            return False
+
+        return True
+
+    def get_mp4_status(self):
+        if self.is_mp4_available:
+            return 'COMPLETED'
+
+        self.ask_for_mp4()
+
+        path = '/files/%d/mp4' % self.id
+        response = self.client.request(path, method='GET')
+
+        return response['mp4']['status']
+
+    def get_stream_link(self, tunnel=True, prefer_mp4=False):
+        if prefer_mp4 and self.get_mp4_status() == 'COMPLETED':
+            path = '/files/%d/mp4/stream' % self.id
+        else:
+            path = '/files/%d/stream' % self.id
+
         params = {}
         if not tunnel:
             params['notunnel'] = '1'
