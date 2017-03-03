@@ -165,6 +165,7 @@ class Client(object):
         # can use the client.
         attributes = {'client': self}
         self.File = type('File', (_File,), attributes)
+        self.Subtitle = type('Subtitle', (_Subtitle,), attributes)
         self.Transfer = type('Transfer', (_Transfer,), attributes)
         self.Account = type('Account', (_Account,), attributes)
 
@@ -268,7 +269,6 @@ class _BaseResource(object):
         name = self.name[:17] + '...' if len(self.name) > 20 else self.name
         return '<%s id=%r, name=%r>' % (
             self.__class__.__name__, self.id, name)
-
 
 class _File(_BaseResource):
 
@@ -413,6 +413,13 @@ class _File(_BaseResource):
         # Raises exception on 4xx and 5xx
         _process_response(response)
 
+    def get_subtitles(cls):
+        path = '/files/%d/subtitles' % cls.id
+        response = cls.client.request(path, method='GET')
+        json_subtitles = response['subtitles']
+
+        return [cls.client.Subtitle(s, cls.id) for s in json_subtitles]
+
     def delete(self, skip_nonexistents=False):
         data = {'file_id': self.id}
         if skip_nonexistents:
@@ -502,6 +509,36 @@ class _Account(_BaseResource):
     @classmethod
     def settings(cls):
         return cls.client.request('/account/settings', method='GET')
+
+
+class _Subtitle(_BaseResource):
+
+    def __init__(self, resource_dict, file_id):
+        self.__dict__.update(resource_dict)
+        self.file_id = file_id
+
+    def get_download_link(self):
+        path = '/files/%d/subtitles/%s' % (self.file_id, self.key)
+        params = {}
+
+        response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
+
+        if str(response.status_code)[0] == '2':
+            return response.url
+        elif response.status_code == 302:
+            return response.headers['Location']
+
+    def download(self, dest):
+        name = _str(self.name)
+        path = self.get_download_link()
+
+        filepath = os.path.join(dest, name)
+        logger.info('downloading subtitle file to: %s', filepath)
+        response = self.client.request(path, method='GET', raw=True)
+        with open(filepath, 'w') as f:
+            f.write(response.content)
+
+        return filepath
 
 
 # Due to a nasty bug in datetime module, datetime.strptime calls
