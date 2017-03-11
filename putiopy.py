@@ -409,7 +409,7 @@ class _File(_BaseResource):
         return response['mp4']
 
     def get_stream_link(self, tunnel=True, prefer_mp4=False):
-        if prefer_mp4 and self.get_mp4_status() == 'COMPLETED':
+        if prefer_mp4 and self.get_mp4_status()['status'] == 'COMPLETED':
             path = '/files/%d/mp4/stream' % self.id
         else:
             path = '/files/%d/stream' % self.id
