@@ -48,7 +48,7 @@ def _set_domain(domain='put.io', scheme='https'):
 
     BASE_URL = api_base
     UPLOAD_URL = upload_base + '/v2/files/upload'
-    TUS_UPLOAD_URL = upload_base + '/files'
+    TUS_UPLOAD_URL = upload_base + '/files/'
     ACCESS_TOKEN_URL = api_base + '/oauth2/access_token'
     AUTHENTICATION_URL = api_base + '/oauth2/authenticate'
     AUTHORIZATION_URL = api_base + '/oauth2/authorizations/clients/{client_id}'
@@ -307,7 +307,9 @@ class _File(_BaseResource):
         metadata = {'parent_id': str(parent_id)}
         if name:
             metadata['name'] = name
-        with open(path) as f:
+        else:
+            metadata['name'] = os.path.basename(path)
+        with open(path, 'rb') as f:
             tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
 
     def dir(self):
