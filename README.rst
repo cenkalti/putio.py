@@ -22,7 +22,7 @@ Usage
     import putiopy
 
     helper = putiopy.AuthHelper(CLIENT_ID, CLIENT_SECRET, \
-                              CALLBACK_URL, type='token')
+                                CALLBACK_URL, type='token')
 
     # this will open a browser to authetication url
     # after authenticating you will find the oauth_token in the address bar
@@ -34,6 +34,6 @@ Usage
     files = client.File.list()
 
     # add a new transfer
-    client.Transfer.add_url('http://example.com/good.torrent')
+    transfer = client.Transfer.add_url('http://example.com/good.torrent')
 
     # read the code for other methods.
