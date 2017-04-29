@@ -16,7 +16,7 @@ setup(
     include_package_data=True,
     zip_safe=True,
     platforms='any',
-    install_requires=['requests', 'tus.py'],
+    install_requires=['requests', 'tus.py', 'six'],
     classifiers=[
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

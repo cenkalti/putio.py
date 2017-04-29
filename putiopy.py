@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 import os
+import io
 import json
 import logging
 import binascii
@@ -15,7 +19,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-__version__ = '6.1.0'
+__version__ = '7.0.0'
 
 KB = 1024
 MB = 1024 * KB
@@ -287,7 +291,7 @@ class _File(_BaseResource):
 
     @classmethod
     def upload(cls, path, name=None, parent_id=0):
-        with open(path) as f:
+        with io.open(path, 'rb') as f:
             if name:
                 files = {'file': (name, f)}
             else:
@@ -309,7 +313,7 @@ class _File(_BaseResource):
             metadata['name'] = name
         else:
             metadata['name'] = os.path.basename(path)
-        with open(path, 'rb') as f:
+        with io.open(path, 'rb') as f:
             tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
 
     def dir(self):
@@ -343,7 +347,7 @@ class _File(_BaseResource):
             return False
 
         crcbin = 0
-        with open(filepath, 'rb') as f:
+        with io.open(filepath, 'rb') as f:
             while True:
                 chunk = f.read(CHUNK_SIZE)
                 if not chunk:
@@ -377,11 +381,11 @@ class _File(_BaseResource):
 
         if self.size == 0:
             # Create an empty file
-            open(filepath, 'w').close()
+            io.open(filepath, 'wb').close()
             logger.debug('created empty file %s' % filepath)
         else:
             if first_byte < self.size:
-                with open(filepath, 'ab') as f:
+                with io.open(filepath, 'ab') as f:
                     headers = {'Range': 'bytes=%d-' % first_byte}
 
                     logger.debug('request range: bytes=%d-' % first_byte)
@@ -494,7 +498,7 @@ class _Transfer(_BaseResource):
         if callback_url:
             data['callback_url'] = callback_url
 
-        with open(path) as f:
+        with io.open(path, 'rb') as f:
             files = {'file': f}
             d = cls.client.request(UPLOAD_URL, method='POST', data=data, files=files)
 
@@ -551,7 +555,7 @@ class _Subtitle(_BaseResource):
         filepath = os.path.join(dest, name)
         logger.info('downloading subtitle file to: %s', filepath)
         response = self.client.request(path, method='GET', raw=True)
-        with open(filepath, 'w') as f:
+        with io.open(filepath, 'wb') as f:
             f.write(response.content)
 
         return filepath
