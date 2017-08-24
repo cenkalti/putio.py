@@ -19,7 +19,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-__version__ = '7.0.0'
+__version__ = '7.0.1'
 
 KB = 1024
 MB = 1024 * KB
