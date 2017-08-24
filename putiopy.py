@@ -494,13 +494,14 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def add_torrent(cls, path, parent_id=0, callback_url=None):
+        params = {'torrent': 'true'}
         data = {'parent_id': parent_id}
         if callback_url:
             data['callback_url'] = callback_url
 
         with io.open(path, 'rb') as f:
             files = {'file': f}
-            d = cls.client.request(UPLOAD_URL, method='POST', data=data, files=files)
+            d = cls.client.request(UPLOAD_URL, method='POST', params=params, data=data, files=files)
 
         return cls(d['transfer'])
 
