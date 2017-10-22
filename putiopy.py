@@ -16,6 +16,7 @@ from datetime import datetime
 
 import tus
 import requests
+from requests.exceptions import Timeout
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -177,7 +178,8 @@ class Client(object):
         self.session.close()
 
     def request(self, path, method='GET', params=None, data=None, files=None,
-                headers=None, raw=False, allow_redirects=True, stream=False):
+                headers=None, raw=False, allow_redirects=True, stream=False,
+                timeout=5):
         """
         Wrapper around requests.request()
 
@@ -198,9 +200,13 @@ class Client(object):
             url = BASE_URL + path
         logger.debug('url: %s', url)
 
-        response = self.session.request(
-            method, url, params=params, data=data, files=files,
-            headers=headers, allow_redirects=allow_redirects, stream=stream)
+        try:
+            response = self.session.request(
+                method, url, params=params, data=data, files=files,
+                headers=headers, allow_redirects=allow_redirects, stream=stream,
+                timeout=timeout)
+        except Timeout:
+            raise ServerError(None, 'Timeout', 'Server has sent nothing for %s seconds' % (timeout))
         logger.debug('response: %s', response)
         if raw:
             return response
