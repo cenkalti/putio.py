@@ -20,7 +20,7 @@ from requests.exceptions import Timeout
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-__version__ = '7.0.1'
+__version__ = '7.0.2'
 
 KB = 1024
 MB = 1024 * KB
