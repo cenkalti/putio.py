@@ -321,6 +321,18 @@ class _File(_BaseResource):
             metadata['name'] = os.path.basename(path)
         with io.open(path, 'rb') as f:
             tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
+        
+    @classmethod
+    def search(cls, query, page=1):
+        """
+        Search makes a search request with the given query
+        query: The keyword to search
+        page: The result page number. If -1 given, returns all results at a time.
+        """
+        path = '/files/search/{query}/page/{page}'.format(query=query, page=page)
+        result = cls.client.request(path)
+        files = result['files']
+        return [cls(f) for f in files]
 
     def dir(self):
         """List the files under directory."""
