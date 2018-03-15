@@ -145,11 +145,13 @@ def create_access_token(client_id, client_secret, user, password):
 
 class Client(object):
 
-    def __init__(self, access_token, use_retry=False, extra_headers=None):
+    def __init__(self, access_token, use_retry=False, extra_headers=None,
+            timeout=5):
         self.access_token = access_token
         self.session = requests.session()
         self.session.headers['User-Agent'] = 'putio.py/%s' % __version__
         self.session.headers['Accept'] = 'application/json'
+        self.timeout = timeout
         if extra_headers:
             self.session.headers.update(extra_headers)
 
@@ -178,7 +180,7 @@ class Client(object):
 
     def request(self, path, method='GET', params=None, data=None, files=None,
                 headers=None, raw=False, allow_redirects=True, stream=False,
-                timeout=5):
+                timeout=None):
         """
         Wrapper around requests.request()
 
@@ -189,6 +191,9 @@ class Client(object):
         """
         if not headers:
             headers = {}
+
+        if timeout is None:
+            timeout = self.timeout
 
         # All requests must include oauth_token
         headers['Authorization'] = 'token %s' % self.access_token
@@ -202,7 +207,7 @@ class Client(object):
         response = self.session.request(
             method, url, params=params, data=data, files=files,
             headers=headers, allow_redirects=allow_redirects, stream=stream,
-            timeout=timeout)
+            timeout=self.timeout)
         logger.debug('response: %s', response)
         if raw:
             return response
@@ -317,7 +322,7 @@ class _File(_BaseResource):
             metadata['name'] = os.path.basename(path)
         with io.open(path, 'rb') as f:
             tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
-        
+
     @classmethod
     def search(cls, query, page=1):
         """
