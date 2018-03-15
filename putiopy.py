@@ -228,7 +228,7 @@ def _process_response(response):
     try:
         exception_class = exception_classes[http_error_type]
     except KeyError:
-        raise ServerError(response, 'InvalidStatusCode', str(response.status_code))
+        raise ServerError(response, 'UnknownStatusCode', str(response.status_code))
 
     if exception_class:
         try:
