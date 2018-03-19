@@ -1,9 +1,17 @@
 # coding=utf-8
-import re
+import os
 from setuptools import setup
 
-with open('putiopy.py', 'r') as fd:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
+
+def read(*fname: str) -> str:
+    with open(os.path.join(os.path.dirname(__file__), *fname)) as f:
+        return f.read()
+
+
+try:
+    version = read('VERSION').strip()
+except FileNotFoundError:
+    version = '0'
 
 setup(
     name='putio.py',

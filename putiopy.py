@@ -8,6 +8,7 @@ import json
 import logging
 import binascii
 import webbrowser
+import pkg_resources
 try:
     from urllib import urlencode
 except ImportError:
@@ -19,7 +20,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-__version__ = '8.1.0'
+__version__ = pkg_resources.get_distribution('putio.py').version
 
 KB = 1024
 MB = 1024 * KB
