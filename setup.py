@@ -3,7 +3,7 @@ import os
 from setuptools import setup
 
 
-def read(*fname: str) -> str:
+def read(*fname):
     with open(os.path.join(os.path.dirname(__file__), *fname)) as f:
         return f.read()
 
