@@ -425,6 +425,10 @@ class _File(_BaseResource):
             if delete_after_download:
                 self.delete()
 
+    def get_download_link(self):
+        path = '/files/%d/download' % self.id
+        return BASE_URL + path
+
     def convert_to_mp4(self):
         path = '/files/%d/mp4' % self.id
         self.client.request(path, method='POST')
