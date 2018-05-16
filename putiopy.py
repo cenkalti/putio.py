@@ -425,14 +425,15 @@ class _File(_BaseResource):
             if delete_after_download:
                 self.delete()
 
-    def convert_to_mp4(self):
-        path = '/files/%d/mp4' % self.id
-        self.client.request(path, method='POST')
+    def _get_link(self, path, params):
+        response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
+        if str(response.status_code)[0] == '2':
+            return response.url
+        elif response.status_code == 302:
+            return response.headers['Location']
 
-    def get_mp4_status(self):
-        path = '/files/%d/mp4' % self.id
-        response = self.client.request(path)
-        return response['mp4']
+        # Raises exception on 4xx and 5xx
+        _process_response(response)
 
     def get_stream_link(self, tunnel=True, prefer_mp4=False):
         if prefer_mp4 and self.get_mp4_status()['status'] == 'COMPLETED':
@@ -444,14 +445,22 @@ class _File(_BaseResource):
         if not tunnel:
             params['notunnel'] = '1'
 
-        response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
-        if str(response.status_code)[0] == '2':
-            return response.url
-        elif response.status_code == 302:
-            return response.headers['Location']
+        return self._get_link(path, params)
 
-        # Raises exception on 4xx and 5xx
-        _process_response(response)
+    def get_download_link(self):
+        path = '/files/%d/download' % self.id
+        params = {}
+
+        return self._get_link(path, params)
+
+    def convert_to_mp4(self):
+        path = '/files/%d/mp4' % self.id
+        self.client.request(path, method='POST')
+
+    def get_mp4_status(self):
+        path = '/files/%d/mp4' % self.id
+        response = self.client.request(path)
+        return response['mp4']
 
     def get_subtitles(cls):
         path = '/files/%d/subtitles' % cls.id
