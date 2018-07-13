@@ -605,10 +605,7 @@ def strptime(date):
         'second': date[17:],
     }
 
-    try:
-        d = dict((k, int(v)) for k, v in d.iteritems())
-    except AttributeError:
-        d = dict((k, int(v)) for k, v in d.items())
+    d = dict((k, int(v)) for k, v in d.items())
 
     return datetime(**d)
 
