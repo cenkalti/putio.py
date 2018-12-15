@@ -25,9 +25,11 @@ setup(
     zip_safe=True,
     platforms='any',
     install_requires=['requests', 'tus.py', 'six'],
+    license='MIT',
     classifiers=[
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
+        'License :: OSI Approved :: MIT License',
     ],
 )
