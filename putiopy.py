@@ -56,7 +56,7 @@ def _set_domain(domain='put.io', scheme='https'):
     TUS_UPLOAD_URL = upload_base + '/files/'
     ACCESS_TOKEN_URL = api_base + '/oauth2/access_token'
     AUTHENTICATION_URL = api_base + '/oauth2/authenticate'
-    AUTHORIZATION_URL = api_base + '/oauth2/authorizations/clients/{client_id}'
+    AUTHORIZATION_URL = api_base + '/oauth2/authorizations/clients/{client_id}/{fingerprint}'
 
 
 _set_domain()
@@ -136,8 +136,8 @@ class AuthHelper(object):
         return _process_response(response)['access_token']
 
 
-def create_access_token(client_id, client_secret, user, password):
-    url = AUTHORIZATION_URL.format(client_id=client_id)
+def create_access_token(client_id, client_secret, user, password, fingerprint=''):
+    url = AUTHORIZATION_URL.format(client_id=client_id, fingerprint=fingerprint)
     data = {'client_secret': client_secret}
     auth = (user, password)
     response = requests.put(url, data=data, auth=auth)
