@@ -146,8 +146,7 @@ def create_access_token(client_id, client_secret, user, password):
 
 class Client(object):
 
-    def __init__(self, access_token, use_retry=False, extra_headers=None,
-            timeout=5):
+    def __init__(self, access_token, use_retry=False, extra_headers=None, timeout=5):
         self.access_token = access_token
         self.session = requests.session()
         self.session.headers['User-Agent'] = 'putio.py/%s' % __version__
