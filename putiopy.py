@@ -435,12 +435,6 @@ class _File(_BaseResource):
             if delete_after_download:
                 self.delete()
 
-    def _throttle_transfer(self, max_kbps):
-        if not max_kbps:
-            return
-        else:
-            time.sleep(1)
-
     def _get_link(self, path, params):
         response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
         if str(response.status_code)[0] == '2':
