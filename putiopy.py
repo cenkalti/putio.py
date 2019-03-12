@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import division
 import os
 import io
+import time
 import json
 import logging
 import binascii
@@ -19,6 +20,8 @@ import tus
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+
+from tokenbucket import TokenBucket
 
 __version__ = pkg_resources.get_distribution('putio.py').version
 
@@ -339,13 +342,14 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
 
-    def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
+    def download(self, dest='.', delete_after_download=False, max_kbps=None,
+                 chunk_size=CHUNK_SIZE):
         if self.content_type == 'application/x-directory':
-            self._download_directory(dest, delete_after_download, chunk_size)
+            self._download_directory(dest, delete_after_download, max_kbps, chunk_size)
         else:
-            self._download_file(dest, delete_after_download, chunk_size)
+            self._download_file(dest, delete_after_download, max_kbps, chunk_size)
 
-    def _download_directory(self, dest, delete_after_download, chunk_size):
+    def _download_directory(self, dest, delete_after_download, max_kbps, chunk_size):
         name = _str(self.name)
 
         dest = os.path.join(dest, name)
@@ -353,7 +357,7 @@ class _File(_BaseResource):
             os.mkdir(dest)
 
         for sub_file in self.dir():
-            sub_file.download(dest, delete_after_download, chunk_size)
+            sub_file.download(dest, delete_after_download, max_kbps, chunk_size)
 
         if delete_after_download:
             self.delete()
@@ -383,8 +387,12 @@ class _File(_BaseResource):
         logger.info('crc OK')
         return True
 
-    def _download_file(self, dest, delete_after_download, chunk_size):
+    def _download_file(self, dest, delete_after_download, max_kbps, chunk_size):
         name = _str(self.name)
+
+        if max_kbps:
+            token_bucket = TokenBucket()
+            token_bucket.set_rate(max_kbps)
 
         filepath = os.path.join(dest, name)
         logger.info('downloading file to: %s', filepath)
@@ -419,10 +427,19 @@ class _File(_BaseResource):
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:  # filter out keep-alive new chunks
                             f.write(chunk)
+                            if max_kbps:
+                                nap = token_bucket.consume(chunk_size/1024)
+                                time.sleep(nap)
 
         if self._verify_file(filepath):
             if delete_after_download:
                 self.delete()
+
+    def _throttle_transfer(self, max_kbps):
+        if not max_kbps:
+            return
+        else:
+            time.sleep(1)
 
     def _get_link(self, path, params):
         response = self.client.request(path, method='HEAD', params=params, raw=True, allow_redirects=False)
