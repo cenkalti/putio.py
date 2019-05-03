@@ -292,8 +292,18 @@ class _File(_BaseResource):
 
     @classmethod
     def list(cls, parent_id=0):
-        d = cls.client.request('/files/list', params={'parent_id': parent_id})
-        files = d['files']
+        files = []
+        params = {
+                'parent_id': parent_id,
+                'per_page': '1000',
+        }
+        d = cls.client.request('/files/list', params=params)
+        files.extend(d['files'])
+        while d['cursor']:
+            data = {'cursor': d['cursor']}
+            d = cls.client.request('/files/list/continue', method='POST', data=data)
+            files.extend(d['files'])
+
         return [cls(f) for f in files]
 
     @classmethod
