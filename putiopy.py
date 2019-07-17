@@ -144,6 +144,13 @@ def create_access_token(client_id, client_secret, user, password, fingerprint=''
     return _process_response(response)['access_token']
 
 
+def revoke_access_token(access_token):
+    url = BASE_URL + '/oauth/grants/logout'
+    headers = {'Authorization': 'token %s' % access_token}
+    response = requests.post(url, headers=headers)
+    _process_response(response)
+
+
 class Client(object):
 
     def __init__(self, access_token, use_retry=False, extra_headers=None, timeout=5):
