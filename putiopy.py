@@ -298,11 +298,22 @@ class _File(_BaseResource):
         return cls(t)
 
     @classmethod
-    def list(cls, parent_id=0):
+    def list(cls, parent_id=0, per_page=1000, sort_by='SIZE_DESC', content_type='',
+             file_type='VIDEO', stream_url=False, stream_url_parent=False, mp4_stream_url=False,
+              mp4_stream_url_parent=False, hidden=False, mp4_status=False):
         files = []
-        params = {
+       params = {
                 'parent_id': parent_id,
-                'per_page': '1000',
+                'per_page': per_page,
+                'sort_by': sort_by,
+                'content_type': content_type,
+                'file_type': file_type,
+                'stream_url': stream_url,
+                'stream_url_parent': stream_url_parent,
+                'mp4_stream_url':  mp4_stream_url,
+                'mp4_stream_url_parent': mp4_stream_url_parent,
+                'hidden': hidden,
+                'mp4_status':  mp4_status,
         }
         d = cls.client.request('/files/list', params=params)
         files.extend(d['files'])
