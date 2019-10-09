@@ -19,7 +19,7 @@ setup(
     version=version,
     author=u'Cenk Altı',
     author_email='cenkalti@gmail.com',
-    url='https://github.com/cenk/putio.py',
+    url='https://github.com/cenkalti/putio.py',
     py_modules=['putiopy'],
     include_package_data=True,
     zip_safe=True,
