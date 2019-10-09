@@ -298,28 +298,26 @@ class _File(_BaseResource):
         return cls(t)
 
     @classmethod
-    def list(cls, parent_id=0, per_page=1000, sort_by='SIZE_DESC', content_type='',
-             file_type='VIDEO', stream_url=False, stream_url_parent=False, mp4_stream_url=False,
-              mp4_stream_url_parent=False, hidden=False, mp4_status=False):
-        files = []
-       params = {
+    def list(cls, parent_id=0, per_page=1000, sort_by=None, content_type=None,
+             file_type=None, stream_url=False, stream_url_parent=False, mp4_stream_url=False,
+             mp4_stream_url_parent=False, hidden=False, mp4_status=False):
+        params = {
                 'parent_id': parent_id,
-                'per_page': per_page,
-                'sort_by': sort_by,
-                'content_type': content_type,
-                'file_type': file_type,
-                'stream_url': stream_url,
-                'stream_url_parent': stream_url_parent,
-                'mp4_stream_url':  mp4_stream_url,
-                'mp4_stream_url_parent': mp4_stream_url_parent,
-                'hidden': hidden,
-                'mp4_status':  mp4_status,
+                'per_page': str(per_page),
+                'sort_by': sort_by or '',
+                'content_type': content_type or '',
+                'file_type': file_type or '',
+                'stream_url': str(stream_url),
+                'stream_url_parent': str(stream_url_parent),
+                'mp4_stream_url':  str(mp4_stream_url),
+                'mp4_stream_url_parent': str(mp4_stream_url_parent),
+                'hidden': str(hidden),
+                'mp4_status':  str(mp4_status),
         }
         d = cls.client.request('/files/list', params=params)
-        files.extend(d['files'])
+        files = d['files']
         while d['cursor']:
-            data = {'cursor': d['cursor']}
-            d = cls.client.request('/files/list/continue', method='POST', data=data)
+            d = cls.client.request('/files/list/continue', method='POST', data={'cursor': d['cursor']})
             files.extend(d['files'])
 
         return [cls(f) for f in files]
