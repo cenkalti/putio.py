@@ -329,7 +329,7 @@ class _File(_BaseResource):
 
     @classmethod
     def upload(cls, path, name=None, parent_id=0):
-        """ If the uploaded file is a torrent file, starts it as a transfer. This endpoint must be used with upload.put.io domain. path
+        """ If the uploaded file is a torrent file, starts it as a transfer. This endpoint must be used with upload.put.io domain.
         name: override the file name
         parent_id: where to put the file
         """
