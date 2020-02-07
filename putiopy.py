@@ -301,6 +301,11 @@ class _File(_BaseResource):
     def list(cls, parent_id=0, per_page=1000, sort_by=None, content_type=None,
              file_type=None, stream_url=False, stream_url_parent=False, mp4_stream_url=False,
              mp4_stream_url_parent=False, hidden=False, mp4_status=False):
+        """ List files and their properties.
+
+         parent_id List files under a folder. If not specified, it will show files listed at the root folder
+
+         """
         params = {
                 'parent_id': parent_id,
                 'per_page': str(per_page),
@@ -324,6 +329,10 @@ class _File(_BaseResource):
 
     @classmethod
     def upload(cls, path, name=None, parent_id=0):
+        """ If the uploaded file is a torrent file, starts it as a transfer. This endpoint must be used with upload.put.io domain.
+        name: override the file name
+        parent_id: where to put the file
+        """
         with io.open(path, 'rb') as f:
             if name:
                 files = {'file': (name, f)}
@@ -352,6 +361,7 @@ class _File(_BaseResource):
     @classmethod
     def search(cls, query, page=1):
         """
+        Warning: Deprecated
         Search makes a search request with the given query
         query: The keyword to search
         page: The result page number. If -1 given, returns all results at a time.
@@ -366,6 +376,7 @@ class _File(_BaseResource):
         return self.list(parent_id=self.id)
 
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
+        """Warning: Deprecated"""
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download, chunk_size)
         else:
@@ -527,18 +538,23 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def list(cls):
+        """ List all transfers """
+
         d = cls.client.request('/transfers/list')
         transfers = d['transfers']
         return [cls(t) for t in transfers]
 
     @classmethod
     def get(cls, id):
+        """ Get transfer details """
         d = cls.client.request('/transfers/%i' % id, method='GET')
         t = d['transfer']
         return cls(t)
 
     @classmethod
     def add_url(cls, url, parent_id=0, callback_url=None):
+        """ Add new transfer from URI"""
+
         data = {'url': url, 'save_parent_id': parent_id}
         if callback_url:
             data['callback_url'] = callback_url
@@ -561,9 +577,13 @@ class _Transfer(_BaseResource):
 
     @classmethod
     def clean(cls):
+        """ Clean finished transfers"""
+
         return cls.client.request('/transfers/clean', method='POST')
 
     def cancel(self):
+        """ Cancel or remove  transfers"""
+
         return self.client.request('/transfers/cancel',
                                    method='POST',
                                    data={'transfer_ids': self.id})
@@ -579,10 +599,12 @@ class _Account(_BaseResource):
 
     @classmethod
     def info(cls):
+        """ Get Account info"""
         return cls.client.request('/account/info', method='GET')
 
     @classmethod
     def settings(cls):
+        """ Get account settings"""
         return cls.client.request('/account/settings', method='GET')
 
 
