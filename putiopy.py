@@ -302,8 +302,28 @@ class _File(_BaseResource):
              file_type=None, stream_url=False, stream_url_parent=False, mp4_stream_url=False,
              mp4_stream_url_parent=False, hidden=False, mp4_status=False):
         """ List files and their properties.
+        
+         parent_id: List files under a folder. If not specified, it will show files listed at the root folder
 
-         parent_id List files under a folder. If not specified, it will show files listed at the root folder
+         per_page:  Number of files to be returned in response. If not specified cursor will always be null and no more than 1000 items will be returned
+
+         sort_by: Sort order of files in response. If not specified, the value saved in user settings will be used. Sort options are NAME_ASC, NAME_DESC, SIZE_ASC, SIZE_DESC, DATE_ASC, DATE_DESC, MODIFIED_ASC, MODIFIED_DESC
+
+         content_type:  Filter files by content type.
+
+         file_type:  Filter files by file type. Options to sort the files are FOLDER, FILE, AUDIO, VIDEO, IMAGE, ARCHIVE, PDF,TEXT, SWF
+
+         stream_url: Include stream_url in files array. Options are True or False
+
+         stream_url_parent:  Include stream_url in parent object.  Options are True or False.
+
+         mp4_stream_url:  Include mp4_stream_url in files array. Options are True or False.
+
+         mp4_stream_url_parent:  Include mp4_stream_url in parent object. Options are true or false.
+
+         hidden:  Folders such as "Your friends files" at root and folders in it are hidden by default if they are empty. If you want to include them in response, you can pass true.
+
+         mp4_status: Include mp4_size and need_convert fileds in response. Options are true or false.
 
          """
         params = {
