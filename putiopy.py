@@ -359,15 +359,14 @@ class _File(_BaseResource):
             tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
 
     @classmethod
-    def search(cls, query, page=1):
+    def search(cls, query, per_page=100):
         """
-        Warning: Deprecated
         Search makes a search request with the given query
         query: The keyword to search
-        page: The result page number. If -1 given, returns all results at a time.
+        per_page: Number of files to be returned in response.
         """
-        path = '/files/search/{query}/page/{page}'.format(query=query, page=page)
-        result = cls.client.request(path)
+        path = '/files/search'
+        result = cls.client.request(path, params={'query': query, 'per_page': per_page})
         files = result['files']
         return [cls(f) for f in files]
 
