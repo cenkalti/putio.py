@@ -444,7 +444,9 @@ class _File(_BaseResource):
                     headers = {'Range': 'bytes=%d-' % first_byte}
 
                     logger.debug('request range: bytes=%d-' % first_byte)
-                    response = self.client.request('/files/%s/download' % self.id,
+                    path = '/files/%d/url' % self.id
+                    download_link = self._get_link(path)
+                    response = self.client.request(download_link,
                                                    headers=headers,
                                                    raw=True,
                                                    stream=True)
