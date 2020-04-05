@@ -375,7 +375,6 @@ class _File(_BaseResource):
         return self.list(parent_id=self.id)
 
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
-        """Warning: Deprecated"""
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download, chunk_size)
         else:
