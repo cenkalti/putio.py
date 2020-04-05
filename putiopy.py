@@ -375,7 +375,6 @@ class _File(_BaseResource):
         return self.list(parent_id=self.id)
 
     def download(self, dest='.', delete_after_download=False, chunk_size=CHUNK_SIZE):
-        """Warning: Deprecated"""
         if self.content_type == 'application/x-directory':
             self._download_directory(dest, delete_after_download, chunk_size)
         else:
@@ -445,7 +444,12 @@ class _File(_BaseResource):
 
                     logger.debug('request range: bytes=%d-' % first_byte)
                     path = '/files/%d/url' % self.id
-                    download_link = self._get_link(path)
+                    response = self.client.request(path, raw=True)
+                    if str(response.status_code)[0] != '2':
+                        # Raises exception on 4xx and 5xx
+                        _process_response(response)
+                    
+                    download_link = str(response.json().get('url'))
                     response = self.client.request(download_link,
                                                    headers=headers,
                                                    raw=True,
