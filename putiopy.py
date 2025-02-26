@@ -7,22 +7,16 @@ import json
 import logging
 import os
 import webbrowser
-
-import pkg_resources
-
-try:
-    from urllib import urlencode
-except ImportError:
-    from urllib.parse import urlencode
-
 from datetime import datetime
+from importlib.metadata import version
+from urllib.parse import urlencode
 
 import requests
 import tus
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util import Retry
 
-__version__ = pkg_resources.get_distribution("putio.py").version
+__version__ = version("putio.py")
 
 KB = 1024
 MB = 1024 * KB
@@ -58,7 +52,9 @@ def _set_domain(domain="put.io", scheme="https"):
     TUS_UPLOAD_URL = upload_base + "/files/"
     ACCESS_TOKEN_URL = api_base + "/oauth2/access_token"
     AUTHENTICATION_URL = api_base + "/oauth2/authenticate"
-    AUTHORIZATION_URL = api_base + "/oauth2/authorizations/clients/{client_id}/{fingerprint}"
+    AUTHORIZATION_URL = (
+        api_base + "/oauth2/authorizations/clients/{client_id}/{fingerprint}"
+    )
 
 
 _set_domain()
@@ -116,7 +112,11 @@ class AuthHelper(object):
     @property
     def authentication_url(self):
         """Redirect your users to here to authenticate them."""
-        params = {"client_id": self.client_id, "response_type": self.type, "redirect_uri": self.callback_url}
+        params = {
+            "client_id": self.client_id,
+            "response_type": self.type,
+            "redirect_uri": self.callback_url,
+        }
         return AUTHENTICATION_URL + "?" + urlencode(params)
 
     def open_authentication_url(self):
@@ -164,7 +164,9 @@ class Client(object):
             # Retry maximum 10 times, backoff on each retry
             # Sleeps 1s, 2s, 4s, 8s, etc to a maximum of 120s between retries
             # Retries on HTTP status codes 500, 502, 503, 504
-            retries = Retry(total=10, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+            retries = Retry(
+                total=10, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
+            )
 
             # Use the retry strategy for all HTTPS requests
             self.session.mount("https://", HTTPAdapter(max_retries=retries))
@@ -345,7 +347,9 @@ class _File(_BaseResource):
         d = cls.client.request("/files/list", params=params)
         files = d["files"]
         while d["cursor"]:
-            d = cls.client.request("/files/list/continue", method="POST", data={"cursor": d["cursor"]})
+            d = cls.client.request(
+                "/files/list/continue", method="POST", data={"cursor": d["cursor"]}
+            )
             files.extend(d["files"])
 
         return [cls(f) for f in files]
@@ -361,7 +365,9 @@ class _File(_BaseResource):
                 files = {"file": (name, f)}
             else:
                 files = {"file": f}
-            d = cls.client.request(UPLOAD_URL, method="POST", data={"parent_id": parent_id}, files=files)
+            d = cls.client.request(
+                UPLOAD_URL, method="POST", data={"parent_id": parent_id}, files=files
+            )
 
         try:
             return cls(d["file"])
@@ -378,7 +384,9 @@ class _File(_BaseResource):
         else:
             metadata["name"] = os.path.basename(path)
         with io.open(path, "rb") as f:
-            tus.upload(f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata)
+            tus.upload(
+                f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata
+            )
 
     @classmethod
     def search(cls, query, per_page=100):
@@ -396,7 +404,9 @@ class _File(_BaseResource):
         """List the files under directory."""
         return self.list(parent_id=self.id)
 
-    def download(self, dest=".", delete_after_download=False, chunk_size=CHUNK_SIZE, save_as=""):
+    def download(
+        self, dest=".", delete_after_download=False, chunk_size=CHUNK_SIZE, save_as=""
+    ):
         if self.content_type == "application/x-directory":
             self._download_directory(dest, delete_after_download, chunk_size, save_as)
         else:
@@ -419,7 +429,10 @@ class _File(_BaseResource):
         logger.info("verifying crc32...")
         filesize = os.path.getsize(filepath)
         if self.size != filesize:
-            logging.error("file %s is %d bytes, should be %s bytes" % (filepath, filesize, self.size))
+            logging.error(
+                "file %s is %d bytes, should be %s bytes"
+                % (filepath, filesize, self.size)
+            )
             return False
 
         crcbin = 0
@@ -434,7 +447,9 @@ class _File(_BaseResource):
         crc32 = "%08x" % crcbin
 
         if crc32 != self.crc32:
-            logging.error("file %s CRC32 is %s, should be %s" % (filepath, crc32, self.crc32))
+            logging.error(
+                "file %s CRC32 is %s, should be %s" % (filepath, crc32, self.crc32)
+            )
             return False
 
         logger.info("crc OK")
@@ -449,11 +464,15 @@ class _File(_BaseResource):
             first_byte = os.path.getsize(filepath)
 
             if first_byte == self.size:
-                logger.warning("file %s exists and is the correct size %d" % (filepath, self.size))
+                logger.warning(
+                    "file %s exists and is the correct size %d" % (filepath, self.size)
+                )
         else:
             first_byte = 0
 
-        logger.debug("file %s is currently %d, should be %d" % (filepath, first_byte, self.size))
+        logger.debug(
+            "file %s is currently %d, should be %d" % (filepath, first_byte, self.size)
+        )
 
         if self.size == 0:
             # Create an empty file
@@ -472,7 +491,9 @@ class _File(_BaseResource):
                         _process_response(response)
 
                     download_link = str(response.json().get("url"))
-                    response = self.client.request(download_link, headers=headers, raw=True, stream=True)
+                    response = self.client.request(
+                        download_link, headers=headers, raw=True, stream=True
+                    )
                     if str(response.status_code)[0] != "2":
                         # Raises exception on 4xx and 5xx
                         _process_response(response)
@@ -486,7 +507,9 @@ class _File(_BaseResource):
                 self.delete()
 
     def _get_link(self, path, params):
-        response = self.client.request(path, method="HEAD", params=params, raw=True, allow_redirects=False)
+        response = self.client.request(
+            path, method="HEAD", params=params, raw=True, allow_redirects=False
+        )
         if str(response.status_code)[0] == "2":
             return response.url
         elif response.status_code == 302:
@@ -544,15 +567,25 @@ class _File(_BaseResource):
 
     def move(self, parent_id):
         return self.client.request(
-            "/files/move", method="POST", data={"file_ids": str(self.id), "parent_id": str(parent_id)}
+            "/files/move",
+            method="POST",
+            data={"file_ids": str(self.id), "parent_id": str(parent_id)},
         )
 
     def rename(self, name):
-        return self.client.request("/files/rename", method="POST", data={"file_id": str(self.id), "name": str(name)})
+        return self.client.request(
+            "/files/rename",
+            method="POST",
+            data={"file_id": str(self.id), "name": str(name)},
+        )
 
     @classmethod
     def create_folder(cls, name, parent_id=0):
-        r = cls.client.request("/files/create-folder", method="POST", data={"name": name, "parent_id": str(parent_id)})
+        r = cls.client.request(
+            "/files/create-folder",
+            method="POST",
+            data={"name": name, "parent_id": str(parent_id)},
+        )
         f = r["file"]
         return cls(f)
 
@@ -594,7 +627,9 @@ class _Transfer(_BaseResource):
 
         with io.open(path, "rb") as f:
             files = {"file": f}
-            d = cls.client.request(UPLOAD_URL, method="POST", params=params, data=data, files=files)
+            d = cls.client.request(
+                UPLOAD_URL, method="POST", params=params, data=data, files=files
+            )
 
         return cls(d["transfer"])
 
@@ -607,11 +642,17 @@ class _Transfer(_BaseResource):
     def cancel(self):
         """Cancel or remove  transfers"""
 
-        return self.client.request("/transfers/cancel", method="POST", data={"transfer_ids": self.id})
+        return self.client.request(
+            "/transfers/cancel", method="POST", data={"transfer_ids": self.id}
+        )
 
     @classmethod
     def cancel_multi(cls, ids):
-        return cls.client.request("/transfers/cancel", method="POST", data={"transfer_ids": ",".join(map(str, ids))})
+        return cls.client.request(
+            "/transfers/cancel",
+            method="POST",
+            data={"transfer_ids": ",".join(map(str, ids))},
+        )
 
 
 class _Account(_BaseResource):
@@ -637,7 +678,9 @@ class _Subtitle(_BaseResource):
         path = "/files/%d/subtitles/%s" % (self.file_id, self.key)
         params = {}
 
-        response = self.client.request(path, method="HEAD", params=params, raw=True, allow_redirects=False)
+        response = self.client.request(
+            path, method="HEAD", params=params, raw=True, allow_redirects=False
+        )
 
         if str(response.status_code)[0] == "2":
             return response.url
