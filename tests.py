@@ -9,20 +9,22 @@ import putiopy
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        self.client = putiopy.Client('123456')
+        self.client = putiopy.Client("123456")
         self.destination = tempfile.mkdtemp()
 
     def tearDown(self):
         shutil.rmtree(self.destination)
 
     def _download_file(self, name):
-        f = self.client.File({
-            'id': 'file',
-            'name': name,
-            'size': 0,
-            'content_type': 'text/plain',
-            'crc32': '00000000',
-        })
+        f = self.client.File(
+            {
+                "id": "file",
+                "name": name,
+                "size": 0,
+                "content_type": "text/plain",
+                "crc32": "00000000",
+            }
+        )
 
         f.download(self.destination)
 
@@ -35,17 +37,17 @@ class TestCase(unittest.TestCase):
         self.assertTrue(self._file_exists(name))
 
     def test_regular_text(self):
-        self._test_file_download('Robyn')
+        self._test_file_download("Robyn")
 
     def test_unicode_text(self):
-        self._test_file_download(u'Robyn')
+        self._test_file_download("Robyn")
 
     def test_regular_non_ascii(self):
-        self._test_file_download('Röyksopp')
+        self._test_file_download("Röyksopp")
 
     def test_regular_non_ascii_unicode(self):
-        self._test_file_download(u'Röyksopp')
+        self._test_file_download("Röyksopp")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
