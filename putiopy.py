@@ -385,7 +385,12 @@ class _File(_BaseResource):
             metadata["name"] = os.path.basename(path)
         with io.open(path, "rb") as f:
             tus.upload(
-                f, TUS_UPLOAD_URL, file_name=name, headers=headers, metadata=metadata
+                f,
+                TUS_UPLOAD_URL,
+                file_name=name,
+                headers=headers,
+                metadata=metadata,
+                timeout=cls.client.timeout,
             )
 
     @classmethod
